@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Data Benchmarking & Validation</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+
+    <style>
+        /* --- M3 Color Palette (Custom/Inspired) --- */
+        :root {
+            /* Primary Colors */
+            --color-primary: #1E4D9C; /* Deep Blue */
+            --color-on-primary: #FFFFFF;
+            --color-primary-container: #DCE1FF;
+            --color-on-primary-container: #001A5E;
+
+            /* Surface/Background */
+            --color-surface: #F9F9FF;
+            --color-on-surface: #1B1B21;
+            --color-surface-container-high: #E3E2EA;
+            --color-surface-container-low: #F3F3FA;
+            
+            /* Outline/Stroke */
+            --color-outline: #777680;
+            --color-error: #BA1A1A;
+
+            /* Spacing */
+            --m3-spacing-1: 4px;
+            --m3-spacing-2: 8px;
+            --m3-spacing-3: 12px;
+            --m3-spacing-4: 16px;
+            
+            /* Typography */
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* --- Global & Layout --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* Prevent body scroll */
+            background-color: var(--color-surface);
+            color: var(--color-on-surface);
+        }
+
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #map-container {
+            flex-grow: 1; 
+            min-height: 50%;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Message/Status Box for Alerts */
+        #status-message {
+            position: absolute;
+            top: 72px; 
+            left: 50%;
+            transform: translateX(-50%);
+            padding: var(--m3-spacing-2) var(--m3-spacing-4);
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            max-width: 90vw;
+            text-align: center;
+        }
+        
+        #status-message.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        #status-message.error {
+             background-color: var(--color-error);
+        }
+
+        /* --- M3 Components --- */
+        .search-bar {
+            position: absolute;
+            top: var(--m3-spacing-3);
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(300px, 80vw, 600px);
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-outline);
+            border-radius: 28px; 
+            padding: var(--m3-spacing-2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: var(--m3-spacing-2);
+            z-index: 1000; 
+        }
+        
+        .search-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 1rem;
+            padding: 0 var(--m3-spacing-2);
+        }
+
+        .icon-button {
+            color: var(--color-on-surface);
+            cursor: pointer;
+            padding: var(--m3-spacing-2);
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .icon-button:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            padding: var(--m3-spacing-1) var(--m3-spacing-3);
+            border-radius: 8px;
+            background-color: var(--color-primary-container);
+            color: var(--color-on-primary-container);
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+        
+        .filter-chip.selected {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+        }
+
+        .filter-chip:hover:not(.selected) {
+            background-color: #C1C6E6; 
+        }
+
+        /* --- Bottom Sheet Panel (Data Presentation) --- */
+        #data-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48px; 
+            background-color: var(--color-surface-container-high);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+            transition: height 0.3s ease-in-out;
+            z-index: 2; 
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #data-panel.expanded {
+            height: 60vh; 
+            max-height: 80vh; 
+        }
+
+        .panel-handle {
+            height: 48px;
+            padding: 0 var(--m3-spacing-4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background-color: var(--color-primary); 
+            color: var(--color-on-primary);
+        }
+
+        .handle-icon {
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .panel-content {
+            padding: var(--m3-spacing-3);
+            overflow-y: auto;
+            flex-grow: 1;
+            visibility: hidden; 
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #data-panel.expanded .panel-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* --- Table Alignment Overrides --- */
+        #data-table th {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 2px solid var(--color-primary);
+            transition: none;
+        }
+        #data-table td {
+            text-align: left;
+            padding: 8px; 
+            border-bottom: 1px solid var(--color-surface-container-high);
+        }
+        /* Right align numerical columns */
+        #data-table th:nth-child(1), #data-table td:nth-child(1), /* Seq.Num */
+        #data-table th:nth-child(3), #data-table td:nth-child(3), /* Area */
+        #data-table th:nth-child(4), #data-table td:nth-child(4), /* Perimeter */
+        #data-table th:nth-child(5), #data-table td:nth-child(5), /* Height */
+        #data-table th:nth-child(6), #data-table td:nth-child(6), /* Floor Levels */
+        #data-table th:nth-child(7), #data-table td:nth-child(7) { /* OSM ID */
+            text-align: right;
+        }
+        
+        /* --- Custom Marker Style for Seq.Num --- */
+        .seq-marker {
+            background-color: var(--color-primary); 
+            color: var(--color-on-primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            line-height: 24px; /* Vertically center the text */
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.75rem;
+            border: 2px solid var(--color-on-primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            /* Important for Leaflet DivIcon: ensures the center is the anchor point */
+            margin-left: -12px;
+            margin-top: -12px;
+        }
+
+        /* Sidebar (Left Panel - Tools) */
+        #left-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0; 
+            background-color: var(--color-surface);
+            box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            transition: width 0.3s ease-in-out;
+            overflow-x: hidden;
+            padding-top: 56px; 
+        }
+        
+        #left-sidebar.expanded {
+            width: 250px;
+            padding: var(--m3-spacing-4);
+        }
+
+        .sidebar-tool-button {
+            display: block;
+            width: 100%;
+            padding: var(--m3-spacing-3);
+            margin-bottom: var(--m3-spacing-2);
+            text-align: left;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--color-surface-container-low);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1rem;
+            color: var(--color-on-surface);
+        }
+
+        .sidebar-tool-button:hover {
+            background-color: var(--color-surface-container-high);
+        }
+        
+        /* --- Modal Overlay for GeoJSON Upload --- */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            display: none; 
+            justify-content: center;
+            align-items: center;
+        }
+
+        #upload-modal {
+            background-color: var(--color-surface);
+            padding: var(--m3-spacing-4);
+            border-radius: 28px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            width: clamp(300px, 80vw, 400px);
+            display: flex;
+            flex-direction: column;
+            gap: var(--m3-spacing-3);
+        }
+        
+        .modal-button {
+            padding: var(--m3-spacing-2) var(--m3-spacing-4);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .modal-button.primary {
+            background-color: var(--color-primary);
+            color: var(--color-on-primary);
+        }
+        .modal-button.secondary {
+            background-color: var(--color-surface-container-high);
+            color: var(--color-on-surface);
+        }
+        
+        .modal-button.primary:hover { background-color: #153C7D; }
+        .modal-button.secondary:hover { background-color: #CACACA; }
+
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .search-bar {
+                width: 90vw;
+            }
+            #data-panel.expanded {
+                 height: 80vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="map-container"></div>
+        
+        <div id="status-message"></div>
+
+        <div class="search-bar">
+            <i class="fa-solid fa-bars icon-button" id="sidebar-toggle" title="Toggle Navigation"></i>
+
+            <div id="filter-chips" style="display: flex; gap: var(--m3-spacing-1);">
+                <span class="filter-chip selected" id="country-chip" data-key="country" data-value="Canada">Canada</span>
+                <span class="filter-chip selected" id="region-chip" data-key="region" data-value="ON">ON</span>
+            </div>
+
+            <input type="text" placeholder="Search Address or Property Name..." class="search-input" id="address-search-input">
+
+            <i class="fa-solid fa-plus icon-button" id="options-toggle" title="Load Data Options"></i>
+            
+            <i class="fa-solid fa-magnifying-glass icon-button" id="execute-search" title="Execute Search"></i>
+        </div>
+
+        <div id="left-sidebar">
+            <h3 style="margin-top: 0;">Map Tools & Area Definition</h3>
+            <p style="font-size: 0.875rem; color: var(--color-outline);">Define your search area manually:</p>
+            <button class="sidebar-tool-button" id="draw-bbox-tool">
+                <i class="fa-solid fa-square-pen"></i> Draw Area (Box or Polygon)
+            </button>
+            <button class="sidebar-tool-button" id="clear-map-tool">
+                <i class="fa-solid fa-trash-can"></i> Clear Map Boundary
+            </button>
+            <hr style="border: 0; border-top: 1px solid var(--color-surface-container-high); margin: var(--m3-spacing-4) 0;">
+            <p style="font-size: 0.875rem; color: var(--color-outline);">Legend, Layers, and other settings will be here.</p>
+        </div>
+
+        <div id="data-panel">
+            <div class="panel-handle" id="panel-handle">
+                <span id="panel-title">Property Data Results</span>
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <span id="unit-toggle" class="filter-chip" style="padding: 4px 8px;" title="Click to switch between Metric and Imperial units">Metric</span>
+
+                    <i class="fa-solid fa-download handle-icon" id="export-csv" title="Export to CSV"></i>
+                    
+                    <i class="fa-solid fa-map-location-dot handle-icon" id="export-geojson" title="Export to GeoJSON"></i>
+
+                    <i class="fa-solid fa-chevron-up handle-icon" id="panel-toggle" title="Toggle Panel"></i>
+                </div>
+            </div>
+            
+            <div class="panel-content">
+                <p id="property-name-address">Results: 0 buildings | Total Area: 0 sqm</p>
+                <table id="data-table" style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+                    <thead>
+                        <tr>
+                            <th style="cursor: pointer;">Seq.Num</th>
+                            <th style="cursor: pointer;">Name</th>
+                            <th style="cursor: pointer;">Area (sqm)</th>
+                            <th style="cursor: pointer;">Perimeter (m)</th>
+                            <th style="cursor: pointer;">Height (m)</th>
+                            <th style="cursor: pointer;">Floor Levels</th>
+                            <th style="cursor: pointer;">OSM ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="7" style="text-align: center; padding: 16px; border-bottom: none;">Run a query to load data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="modal-overlay">
+            <div id="upload-modal">
+                <h3 style="margin: 0; color: var(--color-primary);">Load Data Options</h3>
+                <p style="margin: 0;">Define the boundary using an external file.</p>
+                
+                <label for="geojson-file" style="font-weight: 500;">Select GeoJSON File:</label>
+                <input type="file" id="geojson-file" accept=".geojson, .json" style="padding: var(--m3-spacing-2); border: 1px solid var(--color-outline); border-radius: 8px;">
+                
+                <div style="display: flex; justify-content: flex-end; gap: var(--m3-spacing-3); margin-top: var(--m3-spacing-3);">
+                    <button class="modal-button secondary" id="modal-cancel">Cancel</button>
+                    <button class="modal-button primary" id="modal-upload-process">Load Boundary</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js" 
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <script type="module">
+        
+        // --- Global Variables & Constants ---
+        const mapElement = document.getElementById('map-container');
+        const statusMessage = document.getElementById('status-message');
+        const dataPanel = document.getElementById('data-panel');
+        const panelToggle = document.getElementById('panel-toggle');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const leftSidebar = document.getElementById('left-sidebar');
+        const countryChip = document.getElementById('country-chip');
+        const regionChip = document.getElementById('region-chip');
+        const addressInput = document.getElementById('address-search-input');
+        const optionsToggle = document.getElementById('options-toggle');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalCancel = document.getElementById('modal-cancel');
+        const uploadProcessBtn = document.getElementById('modal-upload-process');
+        const geojsonFileInput = document.getElementById('geojson-file');
+        const drawBboxTool = document.getElementById('draw-bbox-tool');
+        const clearMapTool = document.getElementById('clear-map-tool');
+        const unitToggle = document.getElementById('unit-toggle');
+        const exportCsvBtn = document.getElementById('export-csv');
+        const exportGeoJsonBtn = document.getElementById('export-geojson');
+
+        // Store current map state and layers
+        let currentBoundaryLayer = null;
+        let searchAreaDefined = 'None'; 
+        
+        const BOUNDARY_TOLERANCE_RATIO = 0.40; 
+        const REGIONS = {
+            'Canada': ['ON', 'QC', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'PE', 'NL'],
+            'United States': ['CA', 'TX', 'NY', 'FL', 'IL', 'PA', 'OH', 'MI', 'GA', 'NC'] 
+        };
+        let currentSearchState = {
+            country: 'Canada',
+            region: 'ON'
+        };
+
+        // --- Unit State and Conversions ---
+        let currentUnitSystem = 'metric';
+        const SQM_TO_SQFT = 10.7639;
+        const M_TO_FT = 3.28084;
+        
+        /**
+         * Formats a raw metric measurement into the current unit system.
+         */
+        function formatMeasurement(value, type) {
+            if (value === null || value === undefined) return { value: '-', unit: '' };
+
+            if (currentUnitSystem === 'metric') {
+                if (type === 'area') return { value: value.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'sqm' };
+                if (type === 'length') return { value: value.toLocaleString(undefined, { maximumFractionDigits: 1 }), unit: 'm' };
+                if (type === 'height') return { value: value.toLocaleString(undefined, { maximumFractionDigits: 1 }), unit: 'm' };
+            } else { // imperial
+                if (type === 'area') return { value: (value * SQM_TO_SQFT).toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: 'sqft' };
+                if (type === 'length') return { value: (value * M_TO_FT).toLocaleString(undefined, { maximumFractionDigits: 1 }), unit: 'ft' };
+                if (type === 'height') return { value: (value * M_TO_FT).toLocaleString(undefined, { maximumFractionDigits: 1 }), unit: 'ft' };
+            }
+            return { value: value.toLocaleString(), unit: '' };
+        }
+
+
+        // --- Map Initialization ---
+
+        const map = L.map(mapElement, {
+            zoomControl: false 
+        }).setView([43.6532, -79.3832], 12); 
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        
+        const drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawnItems
+            },
+            draw: {
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    shapeOptions: {
+                        color: '#1E4D9C', fillOpacity: 0.1, weight: 3
+                    }
+                }, // Added Polygon tool
+                marker: false, circle: false, polyline: false, circlemarker: false,
+                rectangle: {
+                    shapeOptions: {
+                        color: '#1E4D9C', fillOpacity: 0.1, weight: 3
+                    }
+                }
+            }
+        });
+        
+        // --- Utility Functions ---
+
+        function showStatus(message, type = 'success', duration = 3000) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'visible';
+            if (type === 'error') {
+                statusMessage.classList.add('error');
+            } else {
+                statusMessage.classList.remove('error');
+            }
+
+            setTimeout(() => {
+                statusMessage.classList.remove('visible');
+            }, duration);
+        }
+        
+        function clearBoundary() {
+            if (currentBoundaryLayer) {
+                map.removeLayer(currentBoundaryLayer);
+                currentBoundaryLayer = null;
+                searchAreaDefined = 'None';
+                showStatus('Map boundary cleared.', 'success', 2000);
+            }
+            if (window.buildingsLayerGroup) {
+                map.removeLayer(window.buildingsLayerGroup);
+            }
+            
+            // NEW ENHANCEMENT: Clear the address input field
+            addressInput.value = ''; 
+            
+            populateDataTable([]);
+            window.currentBuildingsData = [];
+
+            drawnItems.clearLayers();
+            countryChip.style.pointerEvents = 'auto';
+            regionChip.style.pointerEvents = 'auto';
+        }
+
+        function addGeoJsonBoundaryToMap(geojsonData) {
+            clearBoundary(); 
+            
+            currentBoundaryLayer = L.geoJSON(geojsonData, {
+                style: function (feature) {
+                    return {
+                        color: '#1E4D9C', weight: 3, opacity: 1, fillColor: '#1E4D9C', fillOpacity: 0.1
+                    };
+                }
+            }).addTo(map);
+            
+            map.fitBounds(currentBoundaryLayer.getBounds());
+            searchAreaDefined = 'GeoJSON';
+            showStatus('GeoJSON boundary loaded successfully. Retrieving data...', 'success');
+            
+            countryChip.style.pointerEvents = 'none';
+            regionChip.style.pointerEvents = 'none';
+
+            executeDataExtraction();
+        }
+
+        /**
+         * Utility to convert Leaflet coordinates (lat/lng) to Overpass poly format (lat lon lat lon...)
+         * @param {L.Polygon} layer The Leaflet Polygon or Rectangle layer.
+         * @returns {string} The coordinates string in Overpass poly format.
+         */
+        function extractPolygonCoordinates(layer) {
+            // Get coordinates from the Leaflet layer
+            const latLngs = layer.getLatLngs()[0]; // For simple polygon/rectangle
+            
+            // Format into the "lat lon lat lon..." string required by Overpass's poly
+            const polyCoords = latLngs.map(latlng => `${latlng.lat.toFixed(6)} ${latlng.lng.toFixed(6)}`).join(' ');
+            
+            return polyCoords;
+        }
+
+
+        // --- UI/UX Event Handlers ---
+
+        function toggleDataPanel() {
+            dataPanel.classList.toggle('expanded');
+            const isExpanded = dataPanel.classList.contains('expanded');
+            const icon = isExpanded ? 'fa-chevron-down' : 'fa-chevron-up'; 
+            panelToggle.className = `fa-solid ${icon} handle-icon`;
+            panelToggle.title = isExpanded ? 'Collapse Panel' : 'Expand Panel';
+        }
+
+        function toggleSidebar() {
+            leftSidebar.classList.toggle('expanded');
+            const isExpanded = leftSidebar.classList.contains('expanded');
+            sidebarToggle.classList.toggle('fa-bars');
+            sidebarToggle.classList.toggle('fa-arrow-left');
+            sidebarToggle.title = isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar';
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        document.getElementById('panel-handle').addEventListener('click', (e) => {
+            // Only toggle if the click target is NOT the export or unit toggle button
+            if (e.target.id !== 'export-csv' && e.target.id !== 'unit-toggle' && e.target.id !== 'export-geojson') {
+                toggleDataPanel();
+            }
+        });
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        clearMapTool.addEventListener('click', clearBoundary);
+        
+        // Unit Toggle Event Listener
+        unitToggle.addEventListener('click', () => {
+            currentUnitSystem = currentUnitSystem === 'metric' ? 'imperial' : 'metric';
+            unitToggle.textContent = currentUnitSystem === 'metric' ? 'Metric' : 'Imperial';
+            showStatus(`Unit system switched to ${currentUnitSystem.toUpperCase()}.`, 'success', 2000);
+
+            // Re-render the table and map popups if data exists
+            if (window.currentBuildingsData && window.currentBuildingsData.length > 0) {
+                populateDataTable(window.currentBuildingsData);
+                displayBuildingsOnMap(window.currentBuildingsData);
+            }
+        });
+
+
+        // --- 2.2 Filter Chips Logic ---
+        function updateRegionChip(country) {
+            const defaultRegion = REGIONS[country][0]; 
+            currentSearchState.region = defaultRegion;
+            regionChip.textContent = defaultRegion;
+            regionChip.dataset.value = defaultRegion;
+            regionChip.title = `Current region filter: ${defaultRegion}`;
+            
+            if (country === 'Canada') {
+                 map.setView([43.6532, -79.3832], 12);
+            } else {
+                 map.setView([34.0522, -118.2437], 12);
+            }
+        }
+        
+        countryChip.addEventListener('click', () => {
+            if (searchAreaDefined !== 'None') {
+                 showStatus('Clear map boundary before changing filters.', 'error');
+                 return;
+            }
+            
+            const currentCountry = currentSearchState.country;
+            const nextCountry = currentCountry === 'Canada' ? 'United States' : 'Canada';
+            
+            currentSearchState.country = nextCountry;
+            countryChip.textContent = nextCountry;
+            countryChip.dataset.value = nextCountry;
+            countryChip.title = `Current country filter: ${nextCountry}`;
+            
+            updateRegionChip(nextCountry);
+            showStatus(`Country set to ${nextCountry}. Region reset to ${currentSearchState.region}.`, 'success', 2000);
+        });
+
+        regionChip.addEventListener('click', () => {
+            if (searchAreaDefined !== 'None') {
+                 showStatus('Clear map boundary before changing filters.', 'error');
+                 return;
+            }
+            
+            const availableRegions = REGIONS[currentSearchState.country];
+            const currentIndex = availableRegions.indexOf(currentSearchState.region);
+            
+            // Calculate next index, looping back to 0
+            const nextIndex = (currentIndex + 1) % availableRegions.length;
+            const nextRegion = availableRegions[nextIndex];
+            
+            // Update state and chip
+            currentSearchState.region = nextRegion;
+            regionChip.textContent = nextRegion;
+            regionChip.dataset.value = nextRegion;
+            regionChip.title = `Current region filter: ${nextRegion}`;
+            
+            // Note: Map view is not updated here as it's country-level, not region-level defined.
+            showStatus(`Region successfully changed to ${nextRegion} for ${currentSearchState.country}.`, 'success', 2000);
+        });
+
+
+        // --- 2.3 GeoJSON Upload Modal Logic ---
+
+        optionsToggle.addEventListener('click', () => {
+            modalOverlay.style.display = 'flex';
+        });
+
+        modalCancel.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target.id === 'modal-overlay') {
+                modalOverlay.style.display = 'none';
+            }
+        });
+        
+        uploadProcessBtn.addEventListener('click', () => {
+            const file = geojsonFileInput.files[0];
+            if (!file) {
+                showStatus('Please select a GeoJSON file.', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const geojsonData = JSON.parse(e.target.result);
+                    
+                    if (!geojsonData.type || (geojsonData.type !== 'FeatureCollection' && geojsonData.type !== 'Feature' && geojsonData.type !== 'Polygon' && geojsonData.type !== 'MultiPolygon')) {
+                        throw new Error("Invalid GeoJSON structure. Must be Feature, FeatureCollection, Polygon, or MultiPolygon.");
+                    }
+                    
+                    addGeoJsonBoundaryToMap(geojsonData);
+                    modalOverlay.style.display = 'none';
+                    geojsonFileInput.value = ''; 
+                    
+                } catch (error) {
+                    showStatus(`Error processing GeoJSON: ${error.message}`, 'error', 5000);
+                    console.error('GeoJSON parsing error:', error);
+                }
+            };
+            reader.onerror = () => {
+                showStatus('Failed to read file.', 'error');
+            };
+
+            reader.readAsText(file);
+        });
+        
+        // --- 2.4 Address Search Logic (Nominatim Geocoding) ---
+
+        const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+
+        async function geocodeAddress(address) {
+             if (!address.trim()) {
+                showStatus('Please enter an address to search.', 'error');
+                return;
+            }
+            
+            showStatus(`Searching for: ${address}...`, 'success', 5000);
+
+            const url = new URL(NOMINATIM_URL);
+            url.searchParams.append('q', `${address}, ${currentSearchState.region}, ${currentSearchState.country}`);
+            url.searchParams.append('format', 'json');
+            url.searchParams.append('limit', 1);
+
+            try {
+                const response = await fetch(url.toString());
+                if (!response.ok) {
+                    throw new Error(`Nominatim API returned status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.length > 0) {
+                    const result = data[0];
+                    const lat = parseFloat(result.lat);
+                    const lon = parseFloat(result.lon);
+                    const boundingBox = result.boundingbox.map(parseFloat); 
+
+                    map.flyToBounds([
+                        [boundingBox[0], boundingBox[2]],
+                        [boundingBox[1], boundingBox[3]]
+                    ], { padding: [20, 20] });
+                    
+                    showStatus(`Found: ${result.display_name}. Press Search again to retrieve building data.`, 'success', 6000);
+                    
+                    clearBoundary();
+                    currentBoundaryLayer = L.marker([lat, lon]).addTo(map)
+                        .bindPopup(`<b>${result.display_name}</b>`).openPopup();
+                    searchAreaDefined = 'Chips'; 
+                    
+                } else {
+                    showStatus(`No results found for "${address}". Try being more specific.`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Geocoding failed: ${error.message}`, 'error', 5000);
+                console.error('Geocoding error:', error);
+            }
+        }
+
+
+        // --- 2.5 Bounding Box / Polygon Tool Logic ---
+
+        let drawControlEnabled = false;
+        
+        drawBboxTool.addEventListener('click', () => {
+            if (searchAreaDefined !== 'None' && searchAreaDefined !== 'BBOX' && searchAreaDefined !== 'DRAWN_POLYGON') {
+                showStatus('Clear existing GeoJSON or Marker boundary first.', 'error');
+                return;
+            }
+            
+            if (!drawControlEnabled) {
+                map.addControl(drawControl);
+                drawControlEnabled = true;
+                showStatus('Draw a rectangle or polygon on the map to define the search area.', 'success', 4000);
+                drawBboxTool.innerHTML = '<i class="fa-solid fa-square-pen"></i> Disable Draw Tool';
+                drawBboxTool.classList.add('selected');
+                toggleSidebar();
+            } else {
+                map.removeControl(drawControl);
+                drawControlEnabled = false;
+                showStatus('Draw tool disabled.', 'success', 2000);
+                drawBboxTool.innerHTML = '<i class="fa-solid fa-square-pen"></i> Draw Area (Box or Polygon)';
+                drawBboxTool.classList.remove('selected');
+            }
+        });
+
+// ... (Lines 563-605)
+
+        map.on(L.Draw.Event.CREATED, function (e) {
+            const layer = e.layer;
+            const type = e.layerType;
+            
+            // --- 1. Robust Cleanup of previous state to avoid conflicts ---
+            // If an old boundary exists (Marker, GeoJSON, or old Drawn), remove it from the map.
+            if (currentBoundaryLayer) {
+                map.removeLayer(currentBoundaryLayer);
+            }
+            // Clear any previously editable layers from the draw group (ensures only the new layer remains).
+            drawnItems.clearLayers(); 
+            
+            // Clear previous results/data state
+            if (window.buildingsLayerGroup) {
+                map.removeLayer(window.buildingsLayerGroup);
+            }
+            populateDataTable([]);
+            window.currentBuildingsData = [];
+            addressInput.value = ''; // Ensure address input is cleared when drawing new boundary
+            
+            // --- 2. Add the new layer and set state ---
+            drawnItems.addLayer(layer);
+            currentBoundaryLayer = layer;
+            
+            if (type === 'rectangle') {
+                searchAreaDefined = 'BBOX';
+            } else if (type === 'polygon') {
+                searchAreaDefined = 'DRAWN_POLYGON';
+            }
+            
+            const bounds = layer.getBounds();
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+            
+            console.log(`${searchAreaDefined} Defined. BBOX: [${sw.lat}, ${sw.lng}, ${ne.lat}, ${ne.lng}]`);
+            showStatus(`${searchAreaDefined} area defined. Retrieving data...`, 'success', 4000);
+            
+            // --- 3. Disable the draw tool ---
+            map.removeControl(drawControl);
+            drawControlEnabled = false;
+            drawBboxTool.innerHTML = '<i class="fa-solid fa-square-pen"></i> Draw Area (Box or Polygon)';
+            drawBboxTool.classList.remove('selected');
+
+            countryChip.style.pointerEvents = 'none';
+            regionChip.style.pointerEvents = 'none';
+
+            executeDataExtraction();
+        });
+
+
+        // --- PHASE 3: Data Retrieval and Analysis ---
+
+        const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+        const MAX_RETRIES = 3;
+        const INITIAL_BACKOFF = 2000; 
+
+        function buildOverpassQuery() {
+            let query = '[out:json][timeout:25];';
+            let geometryFilter = '';
+            let boundsQuery = '';
+
+            if (currentBoundaryLayer) {
+                if (searchAreaDefined === 'BBOX' || searchAreaDefined === 'Chips') {
+                    let bounds;
+                    if (searchAreaDefined === 'Chips') {
+                        const latlng = currentBoundaryLayer.getLatLng();
+                        const offset = 0.001;
+                        bounds = L.latLngBounds([
+                            [latlng.lat - offset, latlng.lng - offset],
+                            [latlng.lat + offset, latlng.lng + offset]
+                        ]);
+                    } else {
+                        bounds = currentBoundaryLayer.getBounds();
+                    }
+                    
+                    const south = bounds.getSouth();
+                    const west = bounds.getWest();
+                    const north = bounds.getNorth();
+                    const east = bounds.getEast();
+
+                    geometryFilter = `(${south},${west},${north},${east})`;
+                    boundsQuery = geometryFilter; // Use bbox for initial query
+                    
+                } else if (searchAreaDefined === 'DRAWN_POLYGON') {
+                    // Use the poly: filter for the Overpass query's primary geometry constraint
+                    const polyCoords = extractPolygonCoordinates(currentBoundaryLayer);
+                    geometryFilter = `(poly:"${polyCoords}")`;
+                    
+                    // Also calculate a bounding box for the initial query to limit the data retrieval
+                    const bounds = currentBoundaryLayer.getBounds();
+                    const south = bounds.getSouth();
+                    const west = bounds.getWest();
+                    const north = bounds.getNorth();
+                    const east = bounds.getEast();
+                    boundsQuery = `(${south},${west},${north},${east})`;
+                    
+                } else if (searchAreaDefined === 'GeoJSON') {
+                    // For GeoJSON, we only use the BBOX of the GeoJSON layer for the initial query
+                    // and rely on Turf.js for precise clipping (as geometry filter is complex)
+                    const bounds = currentBoundaryLayer.getBounds();
+                    const south = bounds.getSouth();
+                    const west = bounds.getWest();
+                    const north = bounds.getNorth();
+                    const east = bounds.getEast();
+                    boundsQuery = `(${south},${west},${north},${east})`;
+                    geometryFilter = boundsQuery; // Use bounds as default query filter for generic geometry
+                }
+            } else {
+                showStatus('No valid search area defined.', 'error');
+                return null;
+            }
+            
+            // Apply the bounding box (boundsQuery) to the initial set of elements to limit retrieval
+            // And use the geometryFilter (bbox or poly) to filter the results more precisely later
+            
+            let elementsQuery = '';
+            if (searchAreaDefined === 'DRAWN_POLYGON') {
+                 // Use the poly: filter directly in the Overpass query
+                 elementsQuery = `
+                    node["building"]${geometryFilter};
+                    way["building"]${geometryFilter};
+                    relation["building"]${geometryFilter};
+                 `;
+            } else {
+                 // Use the bounding box for GeoJSON/BBOX/Chips (as poly is not available or too simple)
+                 elementsQuery = `
+                    node["building"]${boundsQuery};
+                    way["building"]${boundsQuery};
+                    relation["building"]${boundsQuery};
+                 `;
+            }
+
+            query += `(
+                ${elementsQuery}
+            );`;
+            
+            query += 'out body;>;out skel qt;';
+            
+            return query;
+        }
+
+        async function executeOverpassQuery(query, retryCount = 0) {
+            try {
+                const response = await fetch(OVERPASS_URL, {
+                    method: 'POST',
+                    body: `data=${encodeURIComponent(query)}`,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 || response.status === 504) {
+                        throw new Error(`RETRY:${response.status}`);
+                    }
+                    throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                return data;
+
+            } catch (error) {
+                if (error.message.startsWith('RETRY:') && retryCount < MAX_RETRIES) {
+                    const backoffTime = INITIAL_BACKOFF * Math.pow(2, retryCount);
+                    showStatus(`Query rate limited. Retrying in ${backoffTime/1000}s... (Attempt ${retryCount + 1}/${MAX_RETRIES})`, 'success', backoffTime);
+                    
+                    await new Promise(resolve => setTimeout(resolve, backoffTime));
+                    return executeOverpassQuery(query, retryCount + 1);
+                }
+                throw error;
+            }
+        }
+
+        function calculateArea(coordinates) {
+            try {
+                const polygon = turf.polygon([coordinates]);
+                const area = turf.area(polygon);
+                return Math.round(area * 100) / 100;
+            } catch (error) {
+                console.warn('Area calculation failed:', error);
+                return 0;
+            }
+        }
+
+        function calculatePerimeter(coordinates) {
+            try {
+                const lineString = turf.lineString(coordinates);
+                const perimeter = turf.length(lineString, { units: 'meters' });
+                return Math.round(perimeter * 100) / 100;
+            } catch (error) {
+                console.warn('Perimeter calculation failed:', error);
+                return 0;
+            }
+        }
+
+        function processOverpassData(overpassData) {
+            const buildings = [];
+            const nodeCache = {};
+            
+            let clippingBoundary = null;
+
+            // Only perform clipping/ratio check for GeoJSON, BBOX, and DRAWN_POLYGON where a clear geometry exists
+            if (currentBoundaryLayer && searchAreaDefined !== 'Chips') {
+                clippingBoundary = currentBoundaryLayer.toGeoJSON();
+                
+                if (clippingBoundary.features && clippingBoundary.features.length > 0) {
+                    clippingBoundary = clippingBoundary.features[0];
+                }
+            } else if (searchAreaDefined === 'Chips' && currentBoundaryLayer) {
+                 // For the marker from geocoding, create a tiny bounding box for clipping
+                 const coords = currentBoundaryLayer.getLatLng();
+                 const offset = 0.001; 
+                 clippingBoundary = turf.bboxPolygon([coords.lng - offset, coords.lat - offset, coords.lng + offset, coords.lat + offset]);
+            }
+            
+            const validPolygonTypes = ['Polygon', 'MultiPolygon'];
+            if (!clippingBoundary || !validPolygonTypes.includes(clippingBoundary.geometry.type)) {
+                // This warning will be expected for 'Chips' since we dynamically create a bboxPolygon
+                if (searchAreaDefined !== 'Chips') {
+                    console.warn(`Clipping boundary geometry type '${clippingBoundary ? clippingBoundary.geometry.type : 'None'}' is not a valid Polygon type. Skipping area-ratio filter.`);
+                }
+                clippingBoundary = null; 
+            }
+
+            overpassData.elements.forEach(element => {
+                if (element.type === 'node') {
+                    nodeCache[element.id] = [element.lon, element.lat];
+                }
+            });
+            
+            let sequenceNumber = 1;
+
+            overpassData.elements.forEach((element) => {
+                if (element.type === 'way' && element.tags && element.tags.building) {
+                    const coordinates = element.nodes
+                        .map(nodeId => nodeCache[nodeId])
+                        .filter(coord => coord !== undefined);
+                    
+                    if (coordinates.length < 3) return;
+                    
+                    if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] ||
+                        coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
+                        coordinates.push(coordinates[0]);
+                    }
+                    
+                    const buildingPolygon = turf.polygon([coordinates]);
+
+                    if (clippingBoundary) {
+                        const intersection = turf.intersect(buildingPolygon, clippingBoundary);
+
+                        if (!intersection) {
+                            console.log(`[FILTER EXCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): 0% inside boundary (No intersection).`);
+                            return;
+                        }
+
+                        const areaInside = turf.area(intersection);
+                        const areaOriginal = turf.area(buildingPolygon);
+                        
+                        if (areaOriginal === 0) {
+                            return; 
+                        } 
+
+                        const ratio = areaInside / areaOriginal;
+                        
+                        // For DRAWN_POLYGON, the Overpass query should have already filtered, 
+                        // but keep the ratio check for consistency and robustness against floating point errors
+                        if (ratio < BOUNDARY_TOLERANCE_RATIO) {
+                            console.log(`[FILTER EXCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): Area Ratio ${Math.round(ratio*100)}%. Min required: ${BOUNDARY_TOLERANCE_RATIO*100}%.`);
+                            return; 
+                        }
+                        
+                        console.log(`[FILTER INCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): Area Ratio ${Math.round(ratio*100)}%.`);
+                    }
+
+                    const area = calculateArea(coordinates);
+                    const perimeter = calculatePerimeter(coordinates);
+                    
+                    buildings.push({
+                        seqNum: sequenceNumber++,
+                        name: element.tags.name || 'Unnamed',
+                        description: element.tags.description || element.tags['addr:street'] || '-',
+                        area: area,
+                        perimeter: perimeter,
+                        height: element.tags.height ? parseFloat(element.tags.height) : null,
+                        floorLevels: element.tags['building:levels'] ? parseInt(element.tags['building:levels']) : null,
+                        osmId: element.id,
+                        osmType: element.type,
+                        coordinates: coordinates,
+                        tags: element.tags
+                    });
+                }
+            });
+            
+            return buildings;
+        }
+
+        async function executeDataExtraction() {
+            if (searchAreaDefined === 'None') {
+                showStatus('Please define a search area first (GeoJSON, Address, or Bounding Box).', 'error');
+                return;
+            }
+            
+            showStatus('Building Overpass query...', 'success', 2000);
+            
+            const query = buildOverpassQuery();
+            if (!query) {
+                return;
+            }
+            
+            console.log('Overpass Query:', query);
+            showStatus('Querying OpenStreetMap data...', 'success', 5000);
+            
+            try {
+                const data = await executeOverpassQuery(query);
+                
+                if (!data.elements || data.elements.length === 0) {
+                    showStatus('No buildings found in the specified area BBOX.', 'error', 4000);
+                    populateDataTable([]);
+                    return;
+                }
+                
+                showStatus(`Retrieved ${data.elements.length} OSM elements. Applying ${BOUNDARY_TOLERANCE_RATIO*100}% area-ratio filter... (Check console for detailed logs)`, 'success', 3000);
+                
+                const buildings = processOverpassData(data);
+                
+                if (buildings.length === 0) {
+                    showStatus('No valid building footprints found within the defined tolerance.', 'error', 4000);
+                    populateDataTable([]);
+                    return;
+                }
+                
+                console.log('Processed Buildings:', buildings);
+                showStatus(`Successfully processed ${buildings.length} buildings!`, 'success', 3000);
+                
+                window.currentBuildingsData = buildings;
+                
+                populateDataTable(buildings);
+                displayBuildingsOnMap(buildings);
+                
+                if (!dataPanel.classList.contains('expanded')) {
+                    toggleDataPanel();
+                }
+                
+            } catch (error) {
+                showStatus(`Data extraction failed: ${error.message}`, 'error', 6000);
+                console.error('Overpass query error:', error);
+            }
+        }
+
+        /**
+         * Populates the data table with building information.
+         */
+        function populateDataTable(buildings) {
+            const tbody = document.querySelector('#data-table tbody');
+            const th_area = document.querySelector('#data-table thead th:nth-child(3)');
+            const th_perimeter = document.querySelector('#data-table thead th:nth-child(4)');
+            const th_height = document.querySelector('#data-table thead th:nth-child(5)');
+
+            // Update headers based on current unit system
+            if (currentUnitSystem === 'metric') {
+                th_area.textContent = 'Area (sqm)';
+                th_perimeter.textContent = 'Perimeter (m)';
+                th_height.textContent = 'Height (m)';
+            } else {
+                th_area.textContent = 'Area (sqft)';
+                th_perimeter.textContent = 'Perimeter (ft)';
+                th_height.textContent = 'Height (ft)';
+            }
+
+            tbody.innerHTML = '';
+            
+            if (buildings.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 16px; border-bottom: none;">No buildings found based on current criteria.</td></tr>';
+                 const totalAreaFormatted = formatMeasurement(0, 'area');
+                 document.getElementById('property-name-address').textContent = `Results: 0 buildings | Total Area: 0 ${totalAreaFormatted.unit}`;
+                 return;
+            }
+
+            buildings.forEach((building, index) => {
+                const row = document.createElement('tr');
+                row.style.cursor = 'pointer';
+                row.dataset.buildingIndex = index;
+
+                const area = formatMeasurement(building.area, 'area');
+                const perimeter = formatMeasurement(building.perimeter, 'length');
+                const height = formatMeasurement(building.height, 'height');
+                
+                row.innerHTML = `
+                    <td>${building.seqNum}</td>
+                    <td>${building.name}</td>
+                    <td>${area.value}</td>
+                    <td>${perimeter.value}</td>
+                    <td>${height.value}</td>
+                    <td>${building.floorLevels || '-'}</td>
+                    <td>${building.osmId}</td>
+                `;
+                
+                row.addEventListener('click', () => {
+                    highlightBuildingOnMap(index);
+                });
+                
+                tbody.appendChild(row);
+            });
+            
+            const totalAreaMetric = buildings.reduce((sum, b) => sum + b.area, 0);
+            const totalAreaFormatted = formatMeasurement(totalAreaMetric, 'area');
+            document.getElementById('property-name-address').textContent = 
+                `Results: ${buildings.length} buildings | Total Area: ${totalAreaFormatted.value} ${totalAreaFormatted.unit}`;
+        }
+
+        /**
+         * Displays building footprints and sequence number markers on the map.
+         */
+        function displayBuildingsOnMap(buildings) {
+            if (window.buildingsLayerGroup) {
+                map.removeLayer(window.buildingsLayerGroup);
+            }
+            
+            window.buildingsLayerGroup = L.layerGroup();
+            
+            buildings.forEach((building, index) => {
+                const latLngs = building.coordinates.map(coord => [coord[1], coord[0]]);
+                
+                // --- 1. Building Footprint Polygon ---
+                const polygon = L.polygon(latLngs, {
+                    color: '#FF6B35',
+                    weight: 2,
+                    fillColor: '#FF6B35',
+                    fillOpacity: 0.3
+                });
+                
+                // Add popup content
+                const area = formatMeasurement(building.area, 'area');
+                const perimeter = formatMeasurement(building.perimeter, 'length');
+                const height = formatMeasurement(building.height, 'height');
+                
+                const popupContent = `
+                    <strong>${building.name}</strong><br>
+                    Area: ${area.value} ${area.unit}<br>
+                    Perimeter: ${perimeter.value} ${perimeter.unit}<br>
+                    Height: ${height.value} ${height.unit}<br>
+                    Levels: ${building.floorLevels || 'N/A'}<br>
+                    OSM ID: ${building.osmId}
+                `;
+
+                polygon.bindPopup(popupContent);
+                polygon.buildingIndex = index;
+                window.buildingsLayerGroup.addLayer(polygon);
+                
+                
+                // --- 2. Sequence Number Marker (Pushpin) ---
+                try {
+                    // Calculate centroid using Turf.js
+                    const centerPoint = turf.center(turf.polygon([building.coordinates]));
+                    const centerCoords = centerPoint.geometry.coordinates; // [lon, lat]
+                    
+                    // Define a custom div icon
+                    const seqIcon = L.divIcon({
+                        className: 'seq-marker',
+                        html: `<span>${building.seqNum}</span>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12] // Center the icon
+                    });
+                    
+                    // Create the marker
+                    const marker = L.marker([centerCoords[1], centerCoords[0]], { 
+                        icon: seqIcon,
+                        title: `Building ${building.seqNum}: ${building.name}`
+                    });
+
+                    // Add click handler to highlight the row/polygon
+                    marker.on('click', () => {
+                        highlightBuildingOnMap(index);
+                        // Also expand the data panel if collapsed for better visibility
+                        if (!dataPanel.classList.contains('expanded')) {
+                            toggleDataPanel();
+                        }
+                    });
+                    
+                    // Store index on marker and bind the same popup
+                    marker.buildingIndex = index;
+                    marker.bindPopup(popupContent);
+                    window.buildingsLayerGroup.addLayer(marker);
+
+                } catch (e) {
+                    console.warn(`Could not calculate centroid for building ID ${building.osmId}:`, e);
+                }
+            });
+            
+            window.buildingsLayerGroup.addTo(map);
+        }
+
+        function highlightBuildingOnMap(buildingIndex) {
+            // Find and zoom to the selected building
+            window.buildingsLayerGroup.eachLayer(layer => {
+                if (layer.buildingIndex === buildingIndex) {
+                    // Only fit bounds/style the polygon, but open popup for both marker/polygon
+                    if (layer instanceof L.Polygon) {
+                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                        
+                        // Highlight style
+                        layer.setStyle({ 
+                            color: '#1E4D9C',
+                            weight: 4,
+                            fillOpacity: 0.5
+                        });
+
+                        // Reset style
+                        setTimeout(() => {
+                            layer.setStyle({
+                                color: '#FF6B35',
+                                weight: 2,
+                                fillOpacity: 0.3
+                            });
+                        }, 2000);
+                    }
+                    layer.openPopup();
+                }
+            });
+        }
+
+        // --- CSV Export Implementation ---
+        exportCsvBtn.addEventListener('click', () => {
+            if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
+                showStatus('No data to export.', 'error');
+                return;
+            }
+
+            const headers = [
+                "Seq.Num",
+                "Name",
+                `Area (${currentUnitSystem === 'metric' ? 'sqm' : 'sqft'})`,
+                `Perimeter (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
+                `Height (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
+                "Floor Levels",
+                "OSM ID",
+                "Centroid Latitude",
+                "Centroid Longitude",
+                "Tags"
+            ];
+
+            let csvContent = headers.join(",") + "\n";
+
+            window.currentBuildingsData.forEach(item => {
+                // Calculate units based on current system
+                const area = formatMeasurement(item.area, 'area');
+                const perimeter = formatMeasurement(item.perimeter, 'length');
+                const height = formatMeasurement(item.height, 'height');
+
+                // Get centroid for lat/lng (using Turf's center)
+                let lat = '';
+                let lon = '';
+                try {
+                    const center = turf.center(turf.polygon([item.coordinates]));
+                    lon = center.geometry.coordinates[0].toFixed(6);
+                    lat = center.geometry.coordinates[1].toFixed(6);
+                } catch (e) {
+                    console.error('Centroid calculation failed for building:', item.osmId, e);
+                }
+
+                // Clean up formatted values (remove thousands separators for clean CSV numbers)
+                const cleanValue = (v) => v.toString().replace(/,/g, '');
+
+                const row = [
+                    item.seqNum,
+                    `"${item.name.replace(/"/g, '""')}"`, // Handle quotes in name
+                    cleanValue(area.value), 
+                    cleanValue(perimeter.value),
+                    cleanValue(height.value),
+                    item.floorLevels || '',
+                    item.osmId,
+                    lat,
+                    lon,
+                    `"${JSON.stringify(item.tags).replace(/"/g, '""')}"` // Include all tags as a JSON string
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `property_data_csv_export_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showStatus('CSV data exported successfully!', 'success', 3000);
+            }
+        });
+
+        // --- GeoJSON Export Implementation ---
+        exportGeoJsonBtn.addEventListener('click', exportGeoJson);
+
+        function exportGeoJson() {
+            if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
+                showStatus('No data to export.', 'error');
+                return;
+            }
+
+            const features = [];
+            
+            window.currentBuildingsData.forEach(item => {
+                
+                // --- Properties for both Feature types (using Metric for GeoJSON consistency) ---
+                const commonProperties = {
+                    'seq_num': item.seqNum,
+                    'name': item.name,
+                    'osm_id': item.osmId,
+                    'area_sqm': item.area,
+                    'perimeter_m': item.perimeter,
+                    'height_m': item.height,
+                    'floor_levels': item.floorLevels,
+                    'unit_system_exported': 'metric',
+                    'osm_tags': item.tags
+                };
+
+                // 1. Building Footprint (Polygon Feature)
+                try {
+                    const polygonFeature = turf.polygon([item.coordinates], {
+                        ...commonProperties,
+                        'osm_element_type': item.osmType, // Added for clarity ('way')
+                        'data_entity_type': 'building_footprint', // Renamed from 'feature_type'
+                        'description': 'Building footprint polygon (OSM Way geometry)'
+                    });
+                    features.push(polygonFeature);
+                } catch (e) {
+                    console.error('Failed to create Polygon feature for ID:', item.osmId, e);
+                }
+                
+                // 2. Data Pushpin (Point Feature - Centroid)
+                try {
+                    const centerPoint = turf.center(turf.polygon([item.coordinates]));
+                    
+                    const pointFeature = turf.point(centerPoint.geometry.coordinates, {
+                        ...commonProperties,
+                        'osm_element_type': item.osmType, // Added for clarity ('way')
+                        'data_entity_type': 'data_pushpin_centroid', // Renamed from 'feature_type'
+                        'label': `Seq ${item.seqNum}: ${item.name}`
+                    });
+                    features.push(pointFeature);
+                } catch (e) {
+                     console.warn('Failed to create Point feature (centroid) for ID:', item.osmId, e);
+                }
+            });
+
+            // Create the FeatureCollection
+            const featureCollection = {
+                type: 'FeatureCollection',
+                metadata: {
+                    name: `Property Data Export - ${new Date().toISOString().slice(0, 10)}`,
+                    generated_by: 'Property Data Validation and Benchmarking App',
+                    feature_count: features.length
+                },
+                features: features
+            };
+
+            // Trigger download
+            const jsonString = JSON.stringify(featureCollection, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/geojson;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `property_data_geojson_export_${new Date().toISOString().slice(0, 10)}.geojson`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showStatus('GeoJSON data exported successfully!', 'success', 3000);
+            }
+        }
+
+
+        // --- Core Search Execution Logic ---
+
+        document.getElementById('execute-search').addEventListener('click', () => {
+            if (addressInput.value.trim() !== '' && searchAreaDefined === 'None') {
+                geocodeAddress(addressInput.value);
+            } 
+            else if (searchAreaDefined !== 'None') {
+                executeDataExtraction();
+            } 
+            else {
+                showStatus('Please enter an address or define a map boundary.', 'error');
+            }
+        });
+        
+        addressInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (addressInput.value.trim() !== '' && searchAreaDefined === 'None') {
+                    geocodeAddress(addressInput.value);
+                } else if (searchAreaDefined !== 'None') {
+                    executeDataExtraction();
+                } else {
+                    showStatus('Please enter an address or define a map boundary.', 'error');
+                }
+            }
+        });
+
+        // --- Placeholder Functionality (Table Sorting) ---
+
+        document.querySelector('#data-table thead').addEventListener('click', (e) => {
+            if (e.target.tagName === 'TH') {
+                showStatus(`Sorting triggered for column: ${e.target.textContent.trim()} (Phase 4 - To be implemented)`, 'success', 2000);
+            }
+        });
+
+        console.log("Application initialized. GeoJSON Export feature fixed.");
+    </script>
+</body>
+</html>
