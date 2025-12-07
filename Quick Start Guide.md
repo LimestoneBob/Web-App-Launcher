@@ -1,4 +1,4 @@
-This app lets you draw or load a boundary on a map, pull building outlines from OpenStreetMap, and review area, height, and other details in a table you can export to CSV or GeoJSON.[1]
+The sample, PropertyAssetReview.htm, app lets you draw or load a boundary on a map, pull building outlines from OpenStreetMap, and review area, height, and other details in a table you can export to CSV or GeoJSON.[1]
 
 ***
 
