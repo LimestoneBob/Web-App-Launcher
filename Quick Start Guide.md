@@ -69,7 +69,7 @@ The sample, PropertyAssetReview.htm, app lets you draw or load a boundary on a m
 
 - If the app is opened directly from a file (the address bar starts with `file:///`), some online map and data services may not respond because modern browsers block certain requests for security reasons (often called cross‑site restrictions).
 - To get the best experience, run the app through a simple local web server so the address bar shows something like `http://localhost:8000` instead of `file:///`; common options include using a lightweight tool in your code editor or a basic command‑line server provided by your operating system.
-- The Web App Launcher is a simple local web server app. It is packaged for windows os as an .exe and available under the Releases section.
+- The Web App Launcher is a simple local web server app. It is packaged for windows OS as a .exe and available under the Releases section.
 - If you are connected through a virtual private network, some services that provide maps or location data may still be blocked; if the map tiles or building results do not load as expected, try pausing the virtual private network or switching to a different one and then reload the page.
 
 ***
