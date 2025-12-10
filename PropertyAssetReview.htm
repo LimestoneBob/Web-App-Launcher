@@ -18,7 +18,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 
     <style>
+        
+        /* ------------------------------------------- */
         /* --- M3 Color Palette (Custom/Inspired) --- */
+        /* ------------------------------------------- */
         :root {
             /* Primary Colors */
             --color-primary: #1E4D9C; /* Deep Blue */
@@ -46,7 +49,10 @@
             font-family: 'Roboto', sans-serif;
         }
 
+
+        /* ------------------------- */
         /* --- Global & Layout --- */
+        /* ------------------------- */
         body, html {
             margin: 0;
             padding: 0;
@@ -92,11 +98,15 @@
             opacity: 1;
             visibility: visible;
         }
+
         #status-message.error {
              background-color: var(--color-error);
         }
 
-        /* --- M3 Components --- */
+
+        /* -------------------------- */
+        /* --- M3 Components (UI) --- */
+        /* -------------------------- */
         .search-bar {
             position: absolute;
             top: var(--m3-spacing-3);
@@ -157,8 +167,49 @@
         .filter-chip:hover:not(.selected) {
             background-color: #C1C6E6; 
         }
+        
+        /* Floating guidance tooltip */
+        #search-guidance {
+          position: absolute;
+          top: 100%; /* vertically aligned with button */
+          left: 50%;
+          /* right: -160px; /* offset to appear beside search button */
+          transform: translateY(-50%);
+          margin-top: 4px;
+          background-color: var(--color-primary);
+          color: var(--color-on-primary);
+          padding: 8px 12px;
+          border-radius: 8px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+          font-size: 0.875rem;
+          white-space: nowrap;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.3s ease;
+          z-index: 2000;
+        }
 
+        /* Visible state */
+        #search-guidance.visible {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        /* Pulse animation for search button */
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.15); background-color: #153C7D; color: #fff; }
+          100% { transform: scale(1); }
+        }
+
+        .pulse {
+          animation: pulse 0.8s ease-in-out;
+        }
+
+
+        /* ----------------------------------------------- */
         /* --- Bottom Sheet Panel (Data Presentation) --- */
+        /* ----------------------------------------------- */
         #data-panel {
             position: fixed;
             bottom: 0;
@@ -212,27 +263,39 @@
             opacity: 1;
         }
 
+
+        /* --------------------------------- */
         /* --- Table Alignment Overrides --- */
+        /* --------------------------------- */
         #data-table th {
             text-align: left;
             padding: 8px;
             border-bottom: 2px solid var(--color-primary);
             transition: none;
         }
+
         #data-table td {
             text-align: left;
             padding: 8px; 
             border-bottom: 1px solid var(--color-surface-container-high);
         }
+
         /* Right align numerical columns */
         #data-table th:nth-child(1), #data-table td:nth-child(1), /* Seq.Num */
-        #data-table th:nth-child(3), #data-table td:nth-child(3), /* Area */
-        #data-table th:nth-child(4), #data-table td:nth-child(4), /* Perimeter */
-        #data-table th:nth-child(5), #data-table td:nth-child(5), /* Height */
-        #data-table th:nth-child(6), #data-table td:nth-child(6), /* Floor Levels */
-        #data-table th:nth-child(7), #data-table td:nth-child(7) { /* OSM ID */
+        #data-table th:nth-child(2), #data-table td:nth-child(2), /* Bldg Num */
+        #data-table th:nth-child(4), #data-table td:nth-child(4), /* Area */
+        #data-table th:nth-child(5), #data-table td:nth-child(5), /* Perimeter */
+        #data-table th:nth-child(6), #data-table td:nth-child(6), /* Height */
+        #data-table th:nth-child(7), #data-table td:nth-child(7), /* Floor Levels */
+        #data-table th:nth-child(8), #data-table td:nth-child(8) { /* OSM ID */
             text-align: right;
         }
+
+        /* Name column left-aligned */
+        #data-table th:nth-child(3), #data-table td:nth-child(3) {
+            text-align: left;
+        }
+        
         
         /* --- Custom Marker Style for Seq.Num --- */
         .seq-marker {
@@ -253,44 +316,30 @@
         }
         
         .label-marker {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
 
-.editable-cell {
-    cursor: text;
-    transition: background-color 0.2s;
-}
+        .editable-cell {
+            cursor: text;
+            transition: background-color 0.2s;
+        }
 
-.editable-cell:hover {
-    background-color: #FFF4CC !important;
-}
+        .editable-cell:hover {
+            background-color: #FFF4CC !important;
+        }
 
-.editable-cell:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: -2px;
-    background-color: #FFFFFF !important;
-}
+        .editable-cell:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: -2px;
+            background-color: #FFFFFF !important;
+        }
 
-/* Update table column alignment for new Bldg Num column */
-#data-table th:nth-child(1), #data-table td:nth-child(1), /* Seq.Num */
-#data-table th:nth-child(2), #data-table td:nth-child(2), /* Bldg Num */
-#data-table th:nth-child(4), #data-table td:nth-child(4), /* Area */
-#data-table th:nth-child(5), #data-table td:nth-child(5), /* Perimeter */
-#data-table th:nth-child(6), #data-table td:nth-child(6), /* Height */
-#data-table th:nth-child(7), #data-table td:nth-child(7), /* Floor Levels */
-#data-table th:nth-child(8), #data-table td:nth-child(8) { /* OSM ID */
-    text-align: right;
-}
 
-/* Name column left-aligned */
-#data-table th:nth-child(3), #data-table td:nth-child(3) {
-    text-align: left;
-}
-        
-
-        /* Sidebar (Left Panel - Tools) */
+        /* --------------------------- */
+        /* --- Sidebar (Left Panel) --- */
+        /* --------------------------- */
         #left-sidebar {
             position: fixed;
             left: 0;
@@ -329,7 +378,10 @@
             background-color: var(--color-surface-container-high);
         }
         
+        
+        /* ----------------------------------------- */
         /* --- Modal Overlay for GeoJSON Upload --- */
+        /* ----------------------------------------- */
         #modal-overlay {
             position: fixed;
             top: 0;
@@ -367,6 +419,7 @@
             background-color: var(--color-primary);
             color: var(--color-on-primary);
         }
+
         .modal-button.secondary {
             background-color: var(--color-surface-container-high);
             color: var(--color-on-surface);
@@ -376,11 +429,14 @@
         .modal-button.secondary:hover { background-color: #CACACA; }
 
 
-        /* Responsive adjustments */
+        /* ----------------------------- */
+        /* --- Responsive adjustments --- */
+        /* ----------------------------- */
         @media (max-width: 600px) {
             .search-bar {
                 width: 90vw;
             }
+
             #data-panel.expanded {
                  height: 80vh;
             }
@@ -388,6 +444,7 @@
     </style>
 </head>
 <body>
+
     <div id="app-container">
         <div id="map-container"></div>
         
@@ -406,6 +463,10 @@
             <i class="fa-solid fa-plus icon-button" id="options-toggle" title="Load Data Options"></i>
             
             <i class="fa-solid fa-magnifying-glass icon-button" id="execute-search" title="Execute Search"></i>
+        </div>
+        
+        <div class="action-prompt" id="action-prompt">
+          Click search to load buildings
         </div>
 
         <div id="left-sidebar">
@@ -445,6 +506,7 @@
                               <th style="cursor: pointer;">Perimeter (m)</th>
                               <th style="cursor: pointer;">Height (m)</th>
                               <th style="cursor: pointer;">Floor Levels</th>
+                              <th style="cursor: pointer;">YrBlt</th>
                               <th style="cursor: pointer;">OSM ID</th>
                           </tr>
                       </thead>
@@ -483,6 +545,7 @@
     <script type="module">
         
         // --- Global Variables & Constants ---
+        
         const mapElement = document.getElementById('map-container');
         const statusMessage = document.getElementById('status-message');
         const dataPanel = document.getElementById('data-panel');
@@ -503,6 +566,9 @@
         const exportCsvBtn = document.getElementById('export-csv');
         const exportGeoJsonBtn = document.getElementById('export-geojson');
         const labelToggle = document.getElementById('label-toggle');
+        // --- Guidance Feature Setup ---
+        const executeSearchBtn = document.getElementById('execute-search');
+        const actionPrompt = document.getElementById('action-prompt');
         
         let labelModeEnabled = false;
 
@@ -511,22 +577,28 @@
         let searchAreaDefined = 'None'; 
         
         const BOUNDARY_TOLERANCE_RATIO = 0.40; 
+        
         const REGIONS = {
             'Canada': ['ON', 'QC', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'PE', 'NL'],
             'United States': ['CA', 'TX', 'NY', 'FL', 'IL', 'PA', 'OH', 'MI', 'GA', 'NC'] 
         };
+        
         let currentSearchState = {
             country: 'Canada',
             region: 'ON'
         };
 
         // --- Unit State and Conversions ---
+        
         let currentUnitSystem = 'metric';
         const SQM_TO_SQFT = 10.7639;
         const M_TO_FT = 3.28084;
         
         /**
          * Formats a raw metric measurement into the current unit system.
+         * @param {number|null|undefined} value - The metric value (sqm or m).
+         * @param {'area'|'length'|'height'} type - The type of measurement.
+         * @returns {{value: string, unit: string}} An object containing the formatted value and unit.
          */
         function formatMeasurement(value, type) {
             if (value === null || value === undefined) return { value: '-', unit: '' };
@@ -585,6 +657,12 @@
         
         // --- Utility Functions ---
 
+        /**
+         * Displays a temporary status or alert message to the user.
+         * @param {string} message - The message content.
+         * @param {string} [type='success'] - The type of message ('success' or 'error').
+         * @param {number} [duration=3000] - Duration in milliseconds the message is displayed.
+         */
         function showStatus(message, type = 'success', duration = 3000) {
             statusMessage.textContent = message;
             statusMessage.className = 'visible';
@@ -599,28 +677,52 @@
             }, duration);
         }
         
+        /**
+         * Clears all boundaries, footprints, markers, results, and resets the UI state.
+         * Handles both GeoJSON boundaries and CSV-loaded building footprints.
+         */
         function clearBoundary() {
+            // --- Clear GeoJSON boundary layer ---
             if (currentBoundaryLayer) {
                 map.removeLayer(currentBoundaryLayer);
                 currentBoundaryLayer = null;
-                searchAreaDefined = 'None';
-                showStatus('Map boundary cleared.', 'success', 2000);
             }
+
+            // --- Clear CSV footprints / building layer group ---
             if (window.buildingsLayerGroup) {
                 map.removeLayer(window.buildingsLayerGroup);
+                window.buildingsLayerGroup = null;
             }
-            
-            // NEW ENHANCEMENT: Clear the address input field
-            addressInput.value = ''; 
-            
-            populateDataTable([]);
+
+            // --- Reset state flags ---
+            searchAreaDefined = 'None';
             window.currentBuildingsData = [];
 
+            // --- Reset UI elements ---
+            showStatus('All boundaries and building footprints cleared.', 'success', 2000);
+            hideActionPrompt();
+
+            // Reset input fields
+            if (typeof lastGeocodedAddress !== 'undefined') {
+                lastGeocodedAddress = '';
+            }
+            addressInput.value = '';
+
+            // Reset data table
+            populateDataTable([]);
+
+            // Clear drawn shapes
             drawnItems.clearLayers();
+
+            // Re-enable chips (country/region selection)
             countryChip.style.pointerEvents = 'auto';
             regionChip.style.pointerEvents = 'auto';
         }
 
+        /**
+         * Adds a GeoJSON feature (Polygon/MultiPolygon) to the map as the search boundary.
+         * @param {object} geojsonData - The parsed GeoJSON object.
+         */
         function addGeoJsonBoundaryToMap(geojsonData) {
             clearBoundary(); 
             
@@ -643,8 +745,8 @@
         }
 
         /**
-         * Utility to convert Leaflet coordinates (lat/lng) to Overpass poly format (lat lon lat lon...)
-         * @param {L.Polygon} layer The Leaflet Polygon or Rectangle layer.
+         * Utility to convert Leaflet coordinates (lat/lng) to Overpass poly format (lat lon lat lon...).
+         * @param {L.Polygon|L.Rectangle} layer - The Leaflet Polygon or Rectangle layer.
          * @returns {string} The coordinates string in Overpass poly format.
          */
         function extractPolygonCoordinates(layer) {
@@ -656,10 +758,92 @@
             
             return polyCoords;
         }
+        
+        /**
+         * Shows visual feedback prompting user to take the next action.
+         * @param {string} message - The message content.
+         * @param {number} [duration=5000] - Duration in milliseconds the prompt is displayed.
+         */
+        function showActionPrompt(message, duration = 5000) {
+            actionPrompt.textContent = message;
+            actionPrompt.classList.add('visible');
+            executeSearchBtn.classList.add('pulse');
+            
+            setTimeout(() => {
+                actionPrompt.classList.remove('visible');
+                executeSearchBtn.classList.remove('pulse');
+            }, duration);
+        }
+
+        /**
+         * Hides the action prompt immediately.
+         */
+        function hideActionPrompt() {
+            actionPrompt.classList.remove('visible');
+            executeSearchBtn.classList.remove('pulse');
+        }
+
+        // Create guidance element dynamically
+        let guidanceEl = document.createElement('div');
+        guidanceEl.id = 'search-guidance';
+        guidanceEl.textContent = 'Click search again to load building data';
+        executeSearchBtn.parentElement.appendChild(guidanceEl);
+
+        let guidanceTimeout;
+
+        /**
+         * Show floating guidance near search button
+         */
+        function showSearchGuidance() {
+          clearTimeout(guidanceTimeout);
+          guidanceEl.classList.add('visible');
+          executeSearchBtn.classList.add('pulse');
+
+          // Auto-dismiss after 5 seconds
+          guidanceTimeout = setTimeout(() => {
+            hideSearchGuidance();
+          }, 5000);
+        }
+
+        /**
+         * Hide guidance immediately
+         */
+        function hideSearchGuidance() {
+          guidanceEl.classList.remove('visible');
+          executeSearchBtn.classList.remove('pulse');
+        }
+
+        /**
+         * Integration point: after geocoding success
+         * Call this function once the map pans to the searched location.
+         */
+        function handleGeocodeSuccess(marker) {
+          map.once('moveend', () => {
+            showSearchGuidance();
+          });
+        }
+
+        // --- Event Bindings ---
+
+        // Hide guidance when user clicks search again
+        executeSearchBtn.addEventListener('click', () => {
+          if (guidanceEl.classList.contains('visible')) {
+            hideSearchGuidance();
+            // Proceed to building data extraction logic...
+            executeDataExtraction();
+          } else {
+            // First search action (geocoding)
+            handleGeocodeSuccess();
+          }
+        });
+
 
 
         // --- UI/UX Event Handlers ---
 
+        /**
+         * Toggles the visibility and size of the data results panel.
+         */
         function toggleDataPanel() {
             dataPanel.classList.toggle('expanded');
             const isExpanded = dataPanel.classList.contains('expanded');
@@ -668,12 +852,17 @@
             panelToggle.title = isExpanded ? 'Collapse Panel' : 'Expand Panel';
         }
 
+
+        /**
+         * Toggles the visibility and size of the left sidebar.
+         */
         function toggleSidebar() {
             leftSidebar.classList.toggle('expanded');
             const isExpanded = leftSidebar.classList.contains('expanded');
             sidebarToggle.classList.toggle('fa-bars');
             sidebarToggle.classList.toggle('fa-arrow-left');
             sidebarToggle.title = isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar';
+            // Invalidate size ensures map tiles re-render correctly after container size changes
             setTimeout(() => map.invalidateSize(), 300);
         }
 
@@ -683,10 +872,14 @@
                 toggleDataPanel();
             }
         });
+
         sidebarToggle.addEventListener('click', toggleSidebar);
+
         clearMapTool.addEventListener('click', clearBoundary);
         
-        // Unit Toggle Event Listener
+        /**
+         * Event listener for unit toggle button. Switches between metric and imperial units.
+         */
         unitToggle.addEventListener('click', () => {
             currentUnitSystem = currentUnitSystem === 'metric' ? 'imperial' : 'metric';
             unitToggle.textContent = currentUnitSystem === 'metric' ? 'Metric' : 'Imperial';
@@ -699,6 +892,9 @@
             }
         });
 
+        /**
+         * Event listener for label toggle button. Switches map labels on/off.
+         */
         labelToggle.addEventListener('click', () => {
             labelModeEnabled = !labelModeEnabled;
             labelToggle.textContent = labelModeEnabled ? 'Labels: ON' : 'Labels: OFF';
@@ -714,6 +910,11 @@
 
 
         // --- 2.2 Filter Chips Logic ---
+        
+        /**
+         * Updates the region chip and sets the map view based on the selected country.
+         * @param {string} country - The country name ('Canada' or 'United States').
+         */
         function updateRegionChip(country) {
             const defaultRegion = REGIONS[country][0]; 
             currentSearchState.region = defaultRegion;
@@ -786,176 +987,211 @@
             }
         });
         
-uploadProcessBtn.addEventListener('click', () => {
-    const file = geojsonFileInput.files[0];
-    if (!file) {
-        showStatus('Please select a GeoJSON or CSV file.', 'error');
-        return;
-    }
-
-    const fileName = file.name.toLowerCase();
-    
-    if (fileName.endsWith('.csv')) {
-        // Handle CSV Import
-        Papa.parse(file, {
-            header: true,
-            dynamicTyping: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                try {
-                    processImportedCSV(results.data);
-                    modalOverlay.style.display = 'none';
-                    geojsonFileInput.value = '';
-                } catch (error) {
-                    showStatus(`CSV import failed: ${error.message}`, 'error', 5000);
-                    console.error('CSV import error:', error);
-                }
-            },
-            error: function(error) {
-                showStatus(`CSV parsing failed: ${error.message}`, 'error', 5000);
-            }
-        });
-        
-    } else if (fileName.endsWith('.geojson') || fileName.endsWith('.json')) {
-        // Handle GeoJSON Import (existing logic)
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const geojsonData = JSON.parse(e.target.result);
-                
-                if (!geojsonData.type || (geojsonData.type !== 'FeatureCollection' && geojsonData.type !== 'Feature' && geojsonData.type !== 'Polygon' && geojsonData.type !== 'MultiPolygon')) {
-                    throw new Error("Invalid GeoJSON structure. Must be Feature, FeatureCollection, Polygon, or MultiPolygon.");
-                }
-                
-                addGeoJsonBoundaryToMap(geojsonData);
-                modalOverlay.style.display = 'none';
-                geojsonFileInput.value = '';
-                
-            } catch (error) {
-                showStatus(`Error processing GeoJSON: ${error.message}`, 'error', 5000);
-                console.error('GeoJSON parsing error:', error);
-            }
-        };
-        reader.onerror = () => {
-            showStatus('Failed to read file.', 'error');
-        };
-        reader.readAsText(file);
-        
-    } else {
-        showStatus('Invalid file type. Please select a .csv, .geojson, or .json file.', 'error');
-    }
-});
-
-function processImportedCSV(csvData) {
-    if (!csvData || csvData.length === 0) {
-        throw new Error('CSV file is empty or invalid.');
-    }
-    
-    showStatus('Processing imported CSV data...', 'success', 3000);
-    
-    // Clear existing data
-    clearBoundary();
-    
-    const buildings = [];
-    let minLat = Infinity, maxLat = -Infinity;
-    let minLng = Infinity, maxLng = -Infinity;
-    
-    csvData.forEach((row, index) => {
-        try {
-            // Parse footprint coordinates from JSON string
-            let coordinates;
-            try {
-                coordinates = JSON.parse(row['Footprint Coordinates']);
-                if (!Array.isArray(coordinates) || coordinates.length < 3) {
-                    throw new Error('Invalid coordinate structure');
-                }
-            } catch (e) {
-                console.warn(`Skipping row ${index + 1}: Invalid footprint coordinates`, e);
+        uploadProcessBtn.addEventListener('click', () => {
+            const file = geojsonFileInput.files[0];
+            if (!file) {
+                showStatus('Please select a GeoJSON or CSV file.', 'error');
                 return;
             }
+
+            const fileName = file.name.toLowerCase();
             
-            // Update bounding box for map fitting
-            coordinates.forEach(coord => {
-                if (coord && coord.length >= 2) {
-                    const lng = coord[0];
-                    const lat = coord[1];
-                    minLng = Math.min(minLng, lng);
-                    maxLng = Math.max(maxLng, lng);
-                    minLat = Math.min(minLat, lat);
-                    maxLat = Math.max(maxLat, lat);
+            if (fileName.endsWith('.csv')) {
+                // Handle CSV Import
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        try {
+                            processImportedCSV(results.data);
+                            modalOverlay.style.display = 'none';
+                            geojsonFileInput.value = '';
+                        } catch (error) {
+                            showStatus(`CSV import failed: ${error.message}`, 'error', 5000);
+                            console.error('CSV import error:', error);
+                        }
+                    },
+                    error: function(error) {
+                        showStatus(`CSV parsing failed: ${error.message}`, 'error', 5000);
+                    }
+                });
+                
+            } else if (fileName.endsWith('.geojson') || fileName.endsWith('.json')) {
+                // Handle GeoJSON Import (existing logic)
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const geojsonData = JSON.parse(e.target.result);
+                        
+                        if (!geojsonData.type || (geojsonData.type !== 'FeatureCollection' && geojsonData.type !== 'Feature' && geojsonData.type !== 'Polygon' && geojsonData.type !== 'MultiPolygon')) {
+                            throw new Error("Invalid GeoJSON structure. Must be Feature, FeatureCollection, Polygon, or MultiPolygon.");
+                        }
+                        
+                        addGeoJsonBoundaryToMap(geojsonData);
+                        modalOverlay.style.display = 'none';
+                        geojsonFileInput.value = '';
+                        
+                    } catch (error) {
+                        showStatus(`Error processing GeoJSON: ${error.message}`, 'error', 5000);
+                        console.error('GeoJSON parsing error:', error);
+                    }
+                };
+                reader.onerror = () => {
+                    showStatus('Failed to read file.', 'error');
+                };
+                reader.readAsText(file);
+                
+            } else {
+                showStatus('Invalid file type. Please select a .csv, .geojson, or .json file.', 'error');
+            }
+        });
+
+        /**
+         * Processes imported CSV data, extracting building coordinates and metrics,
+         * then displays them on the map and table.
+         * @param {Array<Object>} csvData - Array of objects parsed from the CSV file.
+         * @throws {Error} If the CSV data is empty or contains no valid records.
+         */
+        function processImportedCSV(csvData) {
+            if (!csvData || csvData.length === 0) {
+                throw new Error('CSV file is empty or invalid.');
+            }
+            
+            showStatus('Processing imported CSV data...', 'success', 3000);
+            
+            // Clear existing data
+            clearBoundary();
+            
+            const buildings = [];
+            let minLat = Infinity, maxLat = -Infinity;
+            let minLng = Infinity, maxLng = -Infinity;
+            
+            csvData.forEach((row, index) => {
+                try {
+                    // Parse footprint coordinates from JSON string
+                    let coordinates;
+                    try {
+                        coordinates = JSON.parse(row['Footprint Coordinates']);
+                        if (!Array.isArray(coordinates) || coordinates.length < 3) {
+                            throw new Error('Invalid coordinate structure');
+                        }
+                    } catch (e) {
+                        console.warn(`Skipping row ${index + 1}: Invalid footprint coordinates`, e);
+                        return;
+                    }
+                    
+                    // Update bounding box for map fitting
+                    coordinates.forEach(coord => {
+                        if (coord && coord.length >= 2) {
+                            const lng = coord[0];
+                            const lat = coord[1];
+                            minLng = Math.min(minLng, lng);
+                            maxLng = Math.max(maxLng, lng);
+                            minLat = Math.min(minLat, lat);
+                            maxLat = Math.max(maxLat, lat);
+                        }
+                    });
+                    
+                    // Parse tags from JSON string
+                    let tags = {};
+                    try {
+                        tags = row['Tags'] ? JSON.parse(row['Tags']) : {};
+                    } catch (e) {
+                        console.warn(`Row ${index + 1}: Could not parse tags`);
+                    }
+                    
+                    // Build the building object
+                    // NOTE: Area/Perimeter/Height columns can be in metric OR imperial units
+                    // depending on which unit system was active during CSV export.
+                    // Check for both metric and imperial column names for flexibility.
+                    
+                    let area = parseFloat(row['Area (sqm)']) || parseFloat(row['Area (sqft)']) || 0;
+                    let perimeter = parseFloat(row['Perimeter (m)']) || parseFloat(row['Perimeter (ft)']) || 0;
+                    let height = row['Height (m)'] ? parseFloat(row['Height (m)']) : 
+                                 row['Height (ft)'] ? parseFloat(row['Height (ft)']) : null;
+                    
+                    // Convert imperial to metric if necessary
+                    const isImperial = (row['Area (sqft)'] !== undefined && row['Area (sqm)'] === undefined) ||
+                                       (row['Perimeter (ft)'] !== undefined && row['Perimeter (m)'] === undefined) ||
+                                       (row['Height (ft)'] !== undefined && row['Height (m)'] === undefined);
+                    
+                    if (isImperial) {
+                        area = (area / SQM_TO_SQFT); // Convert sqft back to sqm
+                        perimeter = (perimeter / M_TO_FT); // Convert ft back to m
+                        if (height !== null) {
+                            height = (height / M_TO_FT); // Convert ft back to m
+                        }
+                    }
+                    
+                    const building = {
+                        seqNum: row['Seq.Num'] || index + 1,
+                        bldgNum: row['Bldg Num'] || '',
+                        name: row['Name'] || 'Unnamed',
+                        area: area,
+                        perimeter: perimeter,
+                        height: height,
+                        floorLevels: row['Floor Levels'] ? parseInt(row['Floor Levels']) : null,
+                        yearBuilt: row['YrBlt'] || null,  // NEW PROPERTY
+                        osmId: row['OSM ID'] || '',
+                        osmType: 'way',
+                        coordinates: coordinates,
+                        tags: tags
+                    };
+                    
+                    buildings.push(building);
+                    
+                } catch (error) {
+                    console.error(`Error processing CSV row ${index + 1}:`, error);
                 }
             });
             
-            // Parse tags from JSON string
-            let tags = {};
-            try {
-                tags = row['Tags'] ? JSON.parse(row['Tags']) : {};
-            } catch (e) {
-                console.warn(`Row ${index + 1}: Could not parse tags`);
+            if (buildings.length === 0) {
+                throw new Error('No valid building records found in CSV.');
             }
             
-            // Build the building object
-            const building = {
-                seqNum: row['Seq.Num'] || index + 1,
-                bldgNum: row['Bldg Num'] || '',
-                name: row['Name'] || 'Unnamed',
-                area: parseFloat(row['Area (sqm)']) || 0,
-                perimeter: parseFloat(row['Perimeter (m)']) || 0,
-                height: row['Height (m)'] ? parseFloat(row['Height (m)']) : null,
-                floorLevels: row['Floor Levels'] ? parseInt(row['Floor Levels']) : null,
-                osmId: row['OSM ID'] || '',
-                osmType: 'way', // Default assumption for CSV imports
-                coordinates: coordinates,
-                tags: tags
-            };
+            // Store the imported data
+            window.currentBuildingsData = buildings;
             
-            buildings.push(building);
+            // Display on map
+            displayBuildingsOnMap(buildings);
             
-        } catch (error) {
-            console.error(`Error processing CSV row ${index + 1}:`, error);
+            // Populate table
+            populateDataTable(buildings);
+            
+            // Fit map to imported buildings
+            if (minLat !== Infinity && maxLat !== -Infinity) {
+                const bounds = L.latLngBounds(
+                    [minLat, minLng],
+                    [maxLat, maxLng]
+                );
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+            
+            // Update UI state
+            searchAreaDefined = 'CSV_IMPORT';
+            countryChip.style.pointerEvents = 'none';
+            regionChip.style.pointerEvents = 'none';
+            
+            showStatus(`Successfully imported ${buildings.length} buildings from CSV!`, 'success', 4000);
+            
+            // Expand data panel if collapsed
+            if (!dataPanel.classList.contains('expanded')) {
+                toggleDataPanel();
+            }
         }
-    });
-    
-    if (buildings.length === 0) {
-        throw new Error('No valid building records found in CSV.');
-    }
-    
-    // Store the imported data
-    window.currentBuildingsData = buildings;
-    
-    // Display on map
-    displayBuildingsOnMap(buildings);
-    
-    // Populate table
-    populateDataTable(buildings);
-    
-    // Fit map to imported buildings
-    if (minLat !== Infinity && maxLat !== -Infinity) {
-        const bounds = L.latLngBounds(
-            [minLat, minLng],
-            [maxLat, maxLng]
-        );
-        map.fitBounds(bounds, { padding: [50, 50] });
-    }
-    
-    // Update UI state
-    searchAreaDefined = 'CSV_IMPORT';
-    countryChip.style.pointerEvents = 'none';
-    regionChip.style.pointerEvents = 'none';
-    
-    showStatus(`Successfully imported ${buildings.length} buildings from CSV!`, 'success', 4000);
-    
-    // Expand data panel if collapsed
-    if (!dataPanel.classList.contains('expanded')) {
-        toggleDataPanel();
-    }
-}
 
         
         // --- 2.4 Address Search Logic (Nominatim Geocoding) ---
 
         const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
+        /**
+         * Uses Nominatim to geocode an address, sets a marker on the map,
+         * and flies the map view to the result's bounding box.
+         * @param {string} address - The address string to search for.
+         * @returns {Promise<void>}
+         */
         async function geocodeAddress(address) {
              if (!address.trim()) {
                 showStatus('Please enter an address to search.', 'error');
@@ -987,12 +1223,17 @@ function processImportedCSV(csvData) {
                         [boundingBox[1], boundingBox[3]]
                     ], { padding: [20, 20] });
                     
-                    showStatus(`Found: ${result.display_name}. Press Search again to retrieve building data.`, 'success', 6000);
-                    
                     clearBoundary();
                     currentBoundaryLayer = L.marker([lat, lon]).addTo(map)
                         .bindPopup(`<b>${result.display_name}</b>`).openPopup();
-                    searchAreaDefined = 'Chips'; 
+                    searchAreaDefined = 'Chips';
+                    lastGeocodedAddress = address; // Track the geocoded address
+
+                    console.log('Geocoding successful. Marker added:', currentBoundaryLayer, 'searchAreaDefined:', searchAreaDefined);
+                    showStatus(`Found: ${result.display_name}`, 'success', 4000);
+
+                    // Show action prompt to guide user
+                    handleGeocodeSuccess();
                     
                 } else {
                     showStatus(`No results found for "${address}". Try being more specific.`, 'error');
@@ -1029,8 +1270,6 @@ function processImportedCSV(csvData) {
                 drawBboxTool.classList.remove('selected');
             }
         });
-
-// ... (Lines 563-605)
 
         map.on(L.Draw.Event.CREATED, function (e) {
             const layer = e.layer;
@@ -1088,6 +1327,10 @@ function processImportedCSV(csvData) {
         const MAX_RETRIES = 3;
         const INITIAL_BACKOFF = 2000; 
 
+        /**
+         * Constructs the Overpass QL query based on the currently defined search area.
+         * @returns {string|null} The Overpass QL query string, or null if no boundary is defined.
+         */
         function buildOverpassQuery() {
             let query = '[out:json][timeout:25];';
             let geometryFilter = '';
@@ -1173,6 +1416,13 @@ function processImportedCSV(csvData) {
             return query;
         }
 
+        /**
+         * Executes the Overpass QL query, with rate-limiting retry logic.
+         * @param {string} query - The Overpass QL query string.
+         * @param {number} [retryCount=0] - The current retry attempt number.
+         * @returns {Promise<Object>} The JSON response data from Overpass.
+         * @throws {Error} If API errors persist after max retries.
+         */
         async function executeOverpassQuery(query, retryCount = 0) {
             try {
                 const response = await fetch(OVERPASS_URL, {
@@ -1205,6 +1455,11 @@ function processImportedCSV(csvData) {
             }
         }
 
+        /**
+         * Calculates the area of a polygon using Turf.js.
+         * @param {Array<Array<number>>} coordinates - An array of [lon, lat] coordinate pairs.
+         * @returns {number} The calculated area in square meters.
+         */
         function calculateArea(coordinates) {
             try {
                 const polygon = turf.polygon([coordinates]);
@@ -1216,6 +1471,11 @@ function processImportedCSV(csvData) {
             }
         }
 
+        /**
+         * Calculates the perimeter of a polygon using Turf.js.
+         * @param {Array<Array<number>>} coordinates - An array of [lon, lat] coordinate pairs.
+         * @returns {number} The calculated perimeter in meters.
+         */
         function calculatePerimeter(coordinates) {
             try {
                 const lineString = turf.lineString(coordinates);
@@ -1226,101 +1486,140 @@ function processImportedCSV(csvData) {
                 return 0;
             }
         }
+        
+         /**
+         * Extracts the year (YYYY format) from various OSM date formats (e.g., YYYY, YYYY-MM-DD).
+         * @param {string} dateString - The date string from OSM tags.
+         * @returns {string|null} - The year in YYYY format, or null if not parseable.
+         */
+        function extractYearFromDate(dateString) {
+            if (!dateString || typeof dateString !== 'string') {
+                return null;
+            }
+            
+            // Remove whitespace
+            dateString = dateString.trim();
+            
+            // Match YYYY at the start of the string (handles YYYY, YYYY-MM-DD, YYYY-MM, etc.)
+            const yearMatch = dateString.match(/^(\d{4})/);
+            if (yearMatch) {
+                const year = parseInt(yearMatch[1]);
+                // Validate reasonable year range (1000-2100)
+                if (year >= 1000 && year <= 2100) {
+                    return yearMatch[1];
+                }
+            }
+            
+            return null;
+        }
 
+        /**
+         * Processes the raw OSM data (nodes and ways) by connecting nodes to ways,
+         * calculating area/perimeter, and applying the boundary clipping filter.
+         * @param {Object} overpassData - The raw JSON data returned from the Overpass API.
+         * @returns {Array<Object>} An array of structured building objects.
+         */
         function processOverpassData(overpassData) {
             const buildings = [];
             const nodeCache = {};
             
-            let clippingBoundary = null;
-
-            // Only perform clipping/ratio check for GeoJSON, BBOX, and DRAWN_POLYGON where a clear geometry exists
-            if (currentBoundaryLayer && searchAreaDefined !== 'Chips') {
-                clippingBoundary = currentBoundaryLayer.toGeoJSON();
-                
-                if (clippingBoundary.features && clippingBoundary.features.length > 0) {
-                    clippingBoundary = clippingBoundary.features[0];
-                }
-            } else if (searchAreaDefined === 'Chips' && currentBoundaryLayer) {
-                 // For the marker from geocoding, create a tiny bounding box for clipping
-                 const coords = currentBoundaryLayer.getLatLng();
-                 const offset = 0.001; 
-                 clippingBoundary = turf.bboxPolygon([coords.lng - offset, coords.lat - offset, coords.lng + offset, coords.lat + offset]);
-            }
-            
-            const validPolygonTypes = ['Polygon', 'MultiPolygon'];
-            if (!clippingBoundary || !validPolygonTypes.includes(clippingBoundary.geometry.type)) {
-                // This warning will be expected for 'Chips' since we dynamically create a bboxPolygon
-                if (searchAreaDefined !== 'Chips') {
-                    console.warn(`Clipping boundary geometry type '${clippingBoundary ? clippingBoundary.geometry.type : 'None'}' is not a valid Polygon type. Skipping area-ratio filter.`);
-                }
-                clippingBoundary = null; 
-            }
-
+            // --- Pass 1: Cache Nodes (Fixes the critical bug) ---
+            // We must cache ALL nodes before processing ANY ways.
+            // Order: [lon, lat] is required for Turf.js compatibility.
             overpassData.elements.forEach(element => {
                 if (element.type === 'node') {
                     nodeCache[element.id] = [element.lon, element.lat];
                 }
             });
             
+            // Setup clipping boundary (Same as original file)
+            let clippingBoundary = null;
+            if (currentBoundaryLayer && searchAreaDefined !== 'Chips') {
+                clippingBoundary = currentBoundaryLayer.toGeoJSON();
+                if (clippingBoundary.features && clippingBoundary.features.length > 0) {
+                    clippingBoundary = clippingBoundary.features[0];
+                }
+            } else if (searchAreaDefined === 'Chips' && currentBoundaryLayer) {
+                    const coords = currentBoundaryLayer.getLatLng();
+                    const offset = 0.001; 
+                    clippingBoundary = turf.bboxPolygon([coords.lng - offset, coords.lat - offset, coords.lng + offset, coords.lat + offset]);
+            }
+            
+            const validPolygonTypes = ['Polygon', 'MultiPolygon'];
+            if (!clippingBoundary || !validPolygonTypes.includes(clippingBoundary.geometry.type)) {
+                if (searchAreaDefined !== 'Chips') {
+                    console.warn(`Clipping boundary geometry type '${clippingBoundary ? clippingBoundary.geometry.type : 'None'}' is not a valid Polygon type. Skipping area-ratio filter.`);
+                }
+                clippingBoundary = null; 
+            }
+
             let sequenceNumber = 1;
 
+            // --- Pass 2: Process Ways ---
             overpassData.elements.forEach((element) => {
                 if (element.type === 'way' && element.tags && element.tags.building) {
+                    // Retrieve coordinates from the fully populated cache
                     const coordinates = element.nodes
                         .map(nodeId => nodeCache[nodeId])
                         .filter(coord => coord !== undefined);
                     
                     if (coordinates.length < 3) return;
                     
+                    // Close the polygon ring if necessary
                     if (coordinates[0][0] !== coordinates[coordinates.length - 1][0] ||
                         coordinates[0][1] !== coordinates[coordinates.length - 1][1]) {
                         coordinates.push(coordinates[0]);
                     }
                     
+                    // --- Original Logic: Boundary Clipping & Calculations ---
                     const buildingPolygon = turf.polygon([coordinates]);
 
                     if (clippingBoundary) {
                         const intersection = turf.intersect(buildingPolygon, clippingBoundary);
 
                         if (!intersection) {
-                            console.log(`[FILTER EXCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): 0% inside boundary (No intersection).`);
+                            console.log(`[FILTER EXCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): 0% inside boundary.`);
                             return;
                         }
 
                         const areaInside = turf.area(intersection);
                         const areaOriginal = turf.area(buildingPolygon);
                         
-                        if (areaOriginal === 0) {
-                            return; 
-                        } 
+                        if (areaOriginal === 0) return; 
 
                         const ratio = areaInside / areaOriginal;
                         
-                        // For DRAWN_POLYGON, the Overpass query should have already filtered, 
-                        // but keep the ratio check for consistency and robustness against floating point errors
                         if (ratio < BOUNDARY_TOLERANCE_RATIO) {
-                            console.log(`[FILTER EXCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): Area Ratio ${Math.round(ratio*100)}%. Min required: ${BOUNDARY_TOLERANCE_RATIO*100}%.`);
+                            console.log(`[FILTER EXCLUDED] ID:${element.id}: Area Ratio ${Math.round(ratio*100)}%.`);
                             return; 
                         }
-                        
-                        console.log(`[FILTER INCLUDED] ID:${element.id} (${element.tags.name || element.tags.building}): Area Ratio ${Math.round(ratio*100)}%.`);
                     }
 
                     const area = calculateArea(coordinates);
                     const perimeter = calculatePerimeter(coordinates);
-                    
+
+                    let yearBuilt = null;
+                    if (element.tags['start_date']) {
+                        yearBuilt = extractYearFromDate(element.tags['start_date']);
+                    }
+                    if (!yearBuilt && element.tags['construction:date']) {
+                        yearBuilt = extractYearFromDate(element.tags['construction:date']);
+                    }
+
+                    // Return the specific object structure the app expects
                     buildings.push({
                         seqNum: sequenceNumber++,
-                        bldgNum: '', // NEW: Initially empty, user can edit
+                        bldgNum: '',
                         name: element.tags.name || 'Unnamed',
                         description: element.tags.description || element.tags['addr:street'] || '-',
                         area: area,
                         perimeter: perimeter,
                         height: element.tags.height ? parseFloat(element.tags.height) : null,
                         floorLevels: element.tags['building:levels'] ? parseInt(element.tags['building:levels']) : null,
+                        yearBuilt: yearBuilt,
                         osmId: element.id,
                         osmType: element.type,
-                        coordinates: coordinates,
+                        coordinates: coordinates, // [lon, lat] format
                         tags: element.tags
                     });
                 }
@@ -1329,12 +1628,26 @@ function processImportedCSV(csvData) {
             return buildings;
         }
 
+
+
+        /**
+         * Orchestrates the data extraction process: builds the query, executes it,
+         * processes the results, and updates the map and table.
+         * @returns {Promise<void>}
+         */
         async function executeDataExtraction() {
+           console.log('executeDataExtraction called. searchAreaDefined:', searchAreaDefined, 'currentBoundaryLayer:', currentBoundaryLayer);
+
             if (searchAreaDefined === 'None') {
                 showStatus('Please define a search area first (GeoJSON, Address, or Bounding Box).', 'error');
                 return;
             }
             
+            if (!currentBoundaryLayer) {
+                showStatus('Boundary layer not found. Please redefine search area.', 'error');
+                console.error('currentBoundaryLayer is null despite searchAreaDefined being:', searchAreaDefined);
+                return;
+            }
             showStatus('Building Overpass query...', 'success', 2000);
             
             const query = buildOverpassQuery();
@@ -1383,199 +1696,209 @@ function processImportedCSV(csvData) {
         }
 
         /**
-         * Populates the data table with building information.
+         * Populates the data table with building information and updates table headers
+         * based on the current unit system. Also attaches event listeners for editing.
+         * @param {Array<Object>} buildings - Array of structured building data objects.
          */
-function populateDataTable(buildings) {
-    const tbody = document.querySelector('#data-table tbody');
-    const th_area = document.querySelector('#data-table thead th:nth-child(4)'); // Updated index
-    const th_perimeter = document.querySelector('#data-table thead th:nth-child(5)');
-    const th_height = document.querySelector('#data-table thead th:nth-child(6)');
+        function populateDataTable(buildings) {
+            const tbody = document.querySelector('#data-table tbody');
+            const th_area = document.querySelector('#data-table thead th:nth-child(4)'); // Updated index
+            const th_perimeter = document.querySelector('#data-table thead th:nth-child(5)');
+            const th_height = document.querySelector('#data-table thead th:nth-child(6)');
 
-    // Update headers based on current unit system
-    if (currentUnitSystem === 'metric') {
-        th_area.textContent = 'Area (sqm)';
-        th_perimeter.textContent = 'Perimeter (m)';
-        th_height.textContent = 'Height (m)';
-    } else {
-        th_area.textContent = 'Area (sqft)';
-        th_perimeter.textContent = 'Perimeter (ft)';
-        th_height.textContent = 'Height (ft)';
-    }
-
-    tbody.innerHTML = '';
-    
-    if (buildings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 16px; border-bottom: none;">No buildings found based on current criteria.</td></tr>';
-        const totalAreaFormatted = formatMeasurement(0, 'area');
-        document.getElementById('property-name-address').textContent = `Results: 0 buildings | Total Area: 0 ${totalAreaFormatted.unit}`;
-        return;
-    }
-
-    buildings.forEach((building, index) => {
-        const row = document.createElement('tr');
-        row.style.cursor = 'pointer';
-        row.dataset.buildingIndex = index;
-
-        const area = formatMeasurement(building.area, 'area');
-        const perimeter = formatMeasurement(building.perimeter, 'length');
-        const height = formatMeasurement(building.height, 'height');
-        
-        row.innerHTML = `
-            <td>${building.seqNum}</td>
-            <td contenteditable="true" class="editable-cell" data-field="bldgNum" style="background-color: #FFF9E6;">${building.bldgNum || ''}</td>
-            <td contenteditable="true" class="editable-cell" data-field="name" style="background-color: #FFF9E6;">${building.name}</td>
-            <td>${area.value}</td>
-            <td>${perimeter.value}</td>
-            <td>${height.value}</td>
-            <td>${building.floorLevels || '-'}</td>
-            <td>${building.osmId}</td>
-        `;
-        
-        // Add click handler for row highlighting (but prevent for editable cells)
-        row.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('editable-cell')) {
-                highlightBuildingOnMap(index);
+            // Update headers based on current unit system
+            if (currentUnitSystem === 'metric') {
+                th_area.textContent = 'Area (sqm)';
+                th_perimeter.textContent = 'Perimeter (m)';
+                th_height.textContent = 'Height (m)';
+            } else {
+                th_area.textContent = 'Area (sqft)';
+                th_perimeter.textContent = 'Perimeter (ft)';
+                th_height.textContent = 'Height (ft)';
             }
-        });
-        
-        // Handle editable cell updates
-        row.querySelectorAll('.editable-cell').forEach(cell => {
-            cell.addEventListener('blur', (e) => {
-                const field = e.target.dataset.field;
-                const newValue = e.target.textContent.trim();
-                window.currentBuildingsData[index][field] = newValue;
+
+            tbody.innerHTML = '';
+            
+            if (buildings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 16px; border-bottom: none;">No buildings found based on current criteria.</td></tr>';
+                const totalAreaFormatted = formatMeasurement(0, 'area');
+                document.getElementById('property-name-address').textContent = `Results: 0 buildings | Total Area: 0 ${totalAreaFormatted.unit}`;
+                return;
+            }
+
+            buildings.forEach((building, index) => {
+                const row = document.createElement('tr');
+                row.style.cursor = 'pointer';
+                row.dataset.buildingIndex = index;
+
+                const area = formatMeasurement(building.area, 'area');
+                const perimeter = formatMeasurement(building.perimeter, 'length');
+                const height = formatMeasurement(building.height, 'height');
                 
-                // If label mode is enabled, update the map markers
-                if (labelModeEnabled) {
-                    displayBuildingsOnMap(window.currentBuildingsData);
-                }
+                row.innerHTML = `
+                    <td>${building.seqNum}</td>
+                    <td contenteditable="true" class="editable-cell" data-field="bldgNum" style="background-color: #FFF9E6;">${building.bldgNum || ''}</td>
+                    <td contenteditable="true" class="editable-cell" data-field="name" style="background-color: #FFF9E6;">${building.name}</td>
+                    <td>${area.value}</td>
+                    <td>${perimeter.value}</td>
+                    <td>${height.value}</td>
+                    <td>${building.floorLevels || '-'}</td>
+                    <td>${building.yearBuilt || '-'}</td>
+                    <td>${building.osmId}</td>
+                `;
                 
-                showStatus(`Updated ${field} for building ${building.seqNum}`, 'success', 1500);
+                // Add click handler for row highlighting (but prevent for editable cells)
+                row.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('editable-cell')) {
+                        highlightBuildingOnMap(index);
+                    }
+                });
+                
+                // Handle editable cell updates
+                row.querySelectorAll('.editable-cell').forEach(cell => {
+                    cell.addEventListener('blur', (e) => {
+                        const field = e.target.dataset.field;
+                        const newValue = e.target.textContent.trim();
+                        window.currentBuildingsData[index][field] = newValue;
+                        
+                        // If label mode is enabled, update the map markers
+                        if (labelModeEnabled) {
+                            displayBuildingsOnMap(window.currentBuildingsData);
+                        }
+                        
+                        showStatus(`Updated ${field} for building ${building.seqNum}`, 'success', 1500);
+                    });
+                    
+                    // Prevent Enter key from adding new lines
+                    cell.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.target.blur();
+                        }
+                    });
+                });
+                
+                tbody.appendChild(row);
             });
             
-            // Prevent Enter key from adding new lines
-            cell.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    e.target.blur();
-                }
-            });
-        });
-        
-        tbody.appendChild(row);
-    });
-    
-    const totalAreaMetric = buildings.reduce((sum, b) => sum + b.area, 0);
-    const totalAreaFormatted = formatMeasurement(totalAreaMetric, 'area');
-    document.getElementById('property-name-address').textContent = 
-        `Results: ${buildings.length} buildings | Total Area: ${totalAreaFormatted.value} ${totalAreaFormatted.unit}`;
-}
+            const totalAreaMetric = buildings.reduce((sum, b) => sum + b.area, 0);
+            const totalAreaFormatted = formatMeasurement(totalAreaMetric, 'area');
+            document.getElementById('property-name-address').textContent = 
+                `Results: ${buildings.length} buildings | Total Area: ${totalAreaFormatted.value} ${totalAreaFormatted.unit}`;
+        }
 
         /**
-         * Displays building footprints and sequence number markers on the map.
+         * Displays building footprints and sequence number/label markers on the map.
+         * @param {Array<Object>} buildings - Array of structured building data objects.
          */
-function displayBuildingsOnMap(buildings) {
-    if (window.buildingsLayerGroup) {
-        map.removeLayer(window.buildingsLayerGroup);
-    }
-    
-    window.buildingsLayerGroup = L.layerGroup();
-    
-    buildings.forEach((building, index) => {
-        const latLngs = building.coordinates.map(coord => [coord[1], coord[0]]);
-        
-        // --- 1. Building Footprint Polygon ---
-        const polygon = L.polygon(latLngs, {
-            color: '#FF6B35',
-            weight: 2,
-            fillColor: '#FF6B35',
-            fillOpacity: 0.3
-        });
-        
-        const area = formatMeasurement(building.area, 'area');
-        const perimeter = formatMeasurement(building.perimeter, 'length');
-        const height = formatMeasurement(building.height, 'height');
-        
-        const popupContent = `
-            <strong>${building.name}</strong><br>
-            ${building.bldgNum ? `Bldg Num: ${building.bldgNum}<br>` : ''}
-            Area: ${area.value} ${area.unit}<br>
-            Perimeter: ${perimeter.value} ${perimeter.unit}<br>
-            Height: ${height.value} ${height.unit}<br>
-            Levels: ${building.floorLevels || 'N/A'}<br>
-            OSM ID: ${building.osmId}
-        `;
-
-        polygon.bindPopup(popupContent);
-        polygon.buildingIndex = index;
-        window.buildingsLayerGroup.addLayer(polygon);
-        
-        // --- 2. Sequence Number or Label Marker ---
-        try {
-            const centerPoint = turf.center(turf.polygon([building.coordinates]));
-            const centerCoords = centerPoint.geometry.coordinates;
-            
-            let markerHTML, iconSize, iconAnchor;
-            
-            if (labelModeEnabled && (building.bldgNum || building.name)) {
-                // Label Mode: Show Bldg Num + Name
-                const labelText = building.bldgNum 
-                    ? `${building.bldgNum} – ${building.name}`
-                    : building.name;
-                
-                markerHTML = `<div style="
-                    background-color: var(--color-primary);
-                    color: var(--color-on-primary);
-                    padding: 4px 8px;
-                    border-radius: 12px;
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                    white-space: nowrap;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                    border: 2px solid white;
-                ">${labelText}</div>`;
-                
-                iconSize = null; // Auto-size based on content
-                iconAnchor = [0, 0]; // Adjust as needed
-                
-            } else {
-                // Standard Mode: Show Seq.Num only
-                markerHTML = `<span>${building.seqNum}</span>`;
-                iconSize = [24, 24];
-                iconAnchor = [12, 12];
+        function displayBuildingsOnMap(buildings) {
+            if (window.buildingsLayerGroup) {
+                map.removeLayer(window.buildingsLayerGroup);
             }
             
-            const markerIcon = L.divIcon({
-                className: labelModeEnabled ? 'label-marker' : 'seq-marker',
-                html: markerHTML,
-                iconSize: iconSize,
-                iconAnchor: iconAnchor
-            });
+            window.buildingsLayerGroup = L.layerGroup();
             
-            const marker = L.marker([centerCoords[1], centerCoords[0]], { 
-                icon: markerIcon,
-                title: `Building ${building.seqNum}: ${building.name}`
-            });
+            buildings.forEach((building, index) => {
+                // Leaflet expects [lat, lon], coordinates array is [lon, lat]
+                const latLngs = building.coordinates.map(coord => [coord[1], coord[0]]);
+                
+                // --- 1. Building Footprint Polygon ---
+                const polygon = L.polygon(latLngs, {
+                    color: '#FF6B35',
+                    weight: 2,
+                    fillColor: '#FF6B35',
+                    fillOpacity: 0.3
+                });
+                
+                const area = formatMeasurement(building.area, 'area');
+                const perimeter = formatMeasurement(building.perimeter, 'length');
+                const height = formatMeasurement(building.height, 'height');
+                
+                const popupContent = `
+                    <strong>${building.name}</strong><br>
+                    ${building.bldgNum ? `Bldg Num: ${building.bldgNum}<br>` : ''}
+                    Area: ${area.value} ${area.unit}<br>
+                    Perimeter: ${perimeter.value} ${perimeter.unit}<br>
+                    Height: ${height.value} ${height.unit}<br>
+                    Levels: ${building.floorLevels || 'N/A'}<br>
+                    Year Built: ${building.yearBuilt || 'N/A'}<br>
+                    OSM ID: ${building.osmId}
+                `;
 
-            marker.on('click', () => {
-                highlightBuildingOnMap(index);
-                if (!dataPanel.classList.contains('expanded')) {
-                    toggleDataPanel();
+                polygon.bindPopup(popupContent);
+                polygon.buildingIndex = index;
+                window.buildingsLayerGroup.addLayer(polygon);
+                
+                // --- 2. Sequence Number or Label Marker ---
+                try {
+                    const centerPoint = turf.center(turf.polygon([building.coordinates]));
+                    const centerCoords = centerPoint.geometry.coordinates;
+                    
+                    let markerHTML, iconSize, iconAnchor;
+                    
+                    if (labelModeEnabled && (building.bldgNum || building.name)) {
+                        // Label Mode: Show Bldg Num + Name
+                        const labelText = building.bldgNum 
+                            ? `${building.bldgNum} – ${building.name}`
+                            : building.name;
+                        
+                        markerHTML = `<div style="
+                            background-color: var(--color-primary);
+                            color: var(--color-on-primary);
+                            padding: 4px 8px;
+                            border-radius: 12px;
+                            font-size: 0.75rem;
+                            font-weight: 500;
+                            white-space: nowrap;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                            border: 2px solid white;
+                        ">${labelText}</div>`;
+                        
+                        iconSize = null; // Auto-size based on content
+                        iconAnchor = [0, 0]; // Adjust as needed
+                        
+                    } else {
+                        // Standard Mode: Show Seq.Num only
+                        markerHTML = `<span>${building.seqNum}</span>`;
+                        iconSize = [24, 24];
+                        iconAnchor = [12, 12];
+                    }
+                    
+                    const markerIcon = L.divIcon({
+                        className: labelModeEnabled ? 'label-marker' : 'seq-marker',
+                        html: markerHTML,
+                        iconSize: iconSize,
+                        iconAnchor: iconAnchor
+                    });
+                    
+                    const marker = L.marker([centerCoords[1], centerCoords[0]], { 
+                        icon: markerIcon,
+                        title: `Building ${building.seqNum}: ${building.name}`
+                    });
+
+                    marker.on('click', () => {
+                        highlightBuildingOnMap(index);
+                        if (!dataPanel.classList.contains('expanded')) {
+                            toggleDataPanel();
+                        }
+                    });
+                    
+                    marker.buildingIndex = index;
+                    marker.bindPopup(popupContent);
+                    window.buildingsLayerGroup.addLayer(marker);
+
+                } catch (e) {
+                    console.warn(`Could not calculate centroid for building ID ${building.osmId}:`, e);
                 }
             });
             
-            marker.buildingIndex = index;
-            marker.bindPopup(popupContent);
-            window.buildingsLayerGroup.addLayer(marker);
-
-        } catch (e) {
-            console.warn(`Could not calculate centroid for building ID ${building.osmId}:`, e);
+            window.buildingsLayerGroup.addTo(map);
         }
-    });
-    
-    window.buildingsLayerGroup.addTo(map);
-}
 
+        /**
+         * Highlights a specific building polygon on the map and zooms to its bounds.
+         * @param {number} buildingIndex - The index of the building in the currentBuildingsData array.
+         */
         function highlightBuildingOnMap(buildingIndex) {
             // Find and zoom to the selected building
             window.buildingsLayerGroup.eachLayer(layer => {
@@ -1606,173 +1929,194 @@ function displayBuildingsOnMap(buildings) {
         }
 
         // --- CSV Export Implementation ---
-exportCsvBtn.addEventListener('click', () => {
-    if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
-        showStatus('No data to export.', 'error');
-        return;
-    }
 
-    const headers = [
-        "Seq.Num",
-        "Bldg Num",
-        "Name",
-        `Area (${currentUnitSystem === 'metric' ? 'sqm' : 'sqft'})`,
-        `Perimeter (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
-        `Height (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
-        "Floor Levels",
-        "OSM ID",
-        "Centroid Latitude",
-        "Centroid Longitude",
-        "Footprint Coordinates",
-        "Tags"
-    ];
+        exportCsvBtn.addEventListener('click', () => {
+            if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
+                showStatus('No data to export.', 'error');
+                return;
+            }
 
-    let csvContent = headers.join(",") + "\n";
+            const headers = [
+                "Seq.Num",
+                "Bldg Num",
+                "Name",
+                `Area (${currentUnitSystem === 'metric' ? 'sqm' : 'sqft'})`,
+                `Perimeter (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
+                `Height (${currentUnitSystem === 'metric' ? 'm' : 'ft'})`,
+                "Floor Levels",
+                "YrBlt",  // NEW COLUMN
+                "OSM ID",
+                "Centroid Latitude",
+                "Centroid Longitude",
+                "Footprint Coordinates",
+                "Tags"
+            ];
 
-    window.currentBuildingsData.forEach(item => {
-        const area = formatMeasurement(item.area, 'area');
-        const perimeter = formatMeasurement(item.perimeter, 'length');
-        const height = formatMeasurement(item.height, 'height');
+            let csvContent = headers.join(",") + "\n";
 
-        let lat = '';
-        let lon = '';
-        try {
-            const center = turf.center(turf.polygon([item.coordinates]));
-            lon = center.geometry.coordinates[0].toFixed(6);
-            lat = center.geometry.coordinates[1].toFixed(6);
-        } catch (e) {
-            console.error('Centroid calculation failed for building:', item.osmId, e);
-        }
+            window.currentBuildingsData.forEach(item => {
+                const area = formatMeasurement(item.area, 'area');
+                const perimeter = formatMeasurement(item.perimeter, 'length');
+                const height = formatMeasurement(item.height, 'height');
 
-        // Format footprint coordinates as JSON string
-        const footprintCoords = JSON.stringify(item.coordinates);
+                let lat = '';
+                let lon = '';
+                try {
+                    const center = turf.center(turf.polygon([item.coordinates]));
+                    lon = center.geometry.coordinates[0].toFixed(6);
+                    lat = center.geometry.coordinates[1].toFixed(6);
+                } catch (e) {
+                    console.error('Centroid calculation failed for building:', item.osmId, e);
+                }
 
-        const cleanValue = (v) => v.toString().replace(/,/g, '');
+                // Format footprint coordinates as JSON string
+                const footprintCoords = JSON.stringify(item.coordinates);
 
-        const row = [
-            item.seqNum,
-            `"${(item.bldgNum || '').replace(/"/g, '""')}"`,
-            `"${item.name.replace(/"/g, '""')}"`,
-            cleanValue(area.value), 
-            cleanValue(perimeter.value),
-            cleanValue(height.value),
-            item.floorLevels || '',
-            item.osmId,
-            lat,
-            lon,
-            `"${footprintCoords.replace(/"/g, '""')}"`,
-            `"${JSON.stringify(item.tags).replace(/"/g, '""')}"`
-        ];
-        csvContent += row.join(",") + "\n";
-    });
+                const cleanValue = (v) => v.toString().replace(/,/g, '');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    
-    if (link.download !== undefined) { 
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `property_data_csv_export_${new Date().toISOString().slice(0, 10)}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showStatus('CSV data exported successfully!', 'success', 3000);
-    }
-});
+                const row = [
+                    item.seqNum,
+                    `"${(item.bldgNum || '').replace(/"/g, '""')}"`,
+                    `"${item.name.replace(/"/g, '""')}"`,
+                    cleanValue(area.value), 
+                    cleanValue(perimeter.value),
+                    cleanValue(height.value),
+                    item.floorLevels || '',
+                    item.yearBuilt || '',  // NEW FIELD
+                    item.osmId,
+                    lat,
+                    lon,
+                    `"${footprintCoords.replace(/"/g, '""')}"`,
+                    `"${JSON.stringify(item.tags).replace(/"/g, '""')}"`
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `property_data_csv_export_${new Date().toISOString().slice(0, 10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showStatus('CSV data exported successfully!', 'success', 3000);
+            }
+        });
 
         // --- GeoJSON Export Implementation ---
+        
         exportGeoJsonBtn.addEventListener('click', exportGeoJson);
 
-function exportGeoJson() {
-    if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
-        showStatus('No data to export.', 'error');
-        return;
-    }
+        /**
+         * Exports the current buildings data into a GeoJSON FeatureCollection,
+         * including both Polygon (footprint) and Point (centroid) features.
+         */
+        function exportGeoJson() {
+            if (!window.currentBuildingsData || window.currentBuildingsData.length === 0) {
+                showStatus('No data to export.', 'error');
+                return;
+            }
 
-    const features = [];
-    
-    window.currentBuildingsData.forEach(item => {
-        const commonProperties = {
-            'seq_num': item.seqNum,
-            'bldg_num': item.bldgNum || '',
-            'name': item.name,
-            'osm_id': item.osmId,
-            'area_sqm': item.area,
-            'perimeter_m': item.perimeter,
-            'height_m': item.height,
-            'floor_levels': item.floorLevels,
-            'unit_system_exported': 'metric',
-            'osm_tags': item.tags
-        };
-
-        // 1. Building Footprint (Polygon Feature)
-        try {
-            const polygonFeature = turf.polygon([item.coordinates], {
-                ...commonProperties,
-                'osm_element_type': item.osmType,
-                'data_entity_type': 'building_footprint',
-                'description': 'Building footprint polygon (OSM Way geometry)'
-            });
-            features.push(polygonFeature);
-        } catch (e) {
-            console.error('Failed to create Polygon feature for ID:', item.osmId, e);
-        }
-        
-        // 2. Data Pushpin (Point Feature - Centroid)
-        try {
-            const centerPoint = turf.center(turf.polygon([item.coordinates]));
+            const features = [];
             
-            const pointFeature = turf.point(centerPoint.geometry.coordinates, {
-                ...commonProperties,
-                'osm_element_type': item.osmType,
-                'data_entity_type': 'data_pushpin_centroid',
-                'label': item.bldgNum 
-                    ? `${item.bldgNum} – ${item.name}` 
-                    : `Seq ${item.seqNum}: ${item.name}`
+            window.currentBuildingsData.forEach(item => {
+                const commonProperties = {
+                    'seq_num': item.seqNum,
+                    'bldg_num': item.bldgNum || '',
+                    'name': item.name,
+                    'osm_id': item.osmId,
+                    'area_sqm': item.area,
+                    'perimeter_m': item.perimeter,
+                    'height_m': item.height,
+                    'floor_levels': item.floorLevels,
+                    'year_built': item.yearBuilt,  // NEW PROPERTY
+                    'unit_system_exported': 'metric',
+                    'osm_tags': item.tags
+                };
+
+                // 1. Building Footprint (Polygon Feature)
+                try {
+                    const polygonFeature = turf.polygon([item.coordinates], {
+                        ...commonProperties,
+                        'osm_element_type': item.osmType,
+                        'data_entity_type': 'building_footprint',
+                        'description': 'Building footprint polygon (OSM Way geometry)'
+                    });
+                    features.push(polygonFeature);
+                } catch (e) {
+                    console.error('Failed to create Polygon feature for ID:', item.osmId, e);
+                }
+                
+                // 2. Data Pushpin (Point Feature - Centroid)
+                try {
+                    const centerPoint = turf.center(turf.polygon([item.coordinates]));
+                    
+                    const pointFeature = turf.point(centerPoint.geometry.coordinates, {
+                        ...commonProperties,
+                        'osm_element_type': item.osmType,
+                        'data_entity_type': 'data_pushpin_centroid',
+                        'label': item.bldgNum 
+                            ? `${item.bldgNum} – ${item.name}` 
+                            : `Seq ${item.seqNum}: ${item.name}`
+                    });
+                    features.push(pointFeature);
+                } catch (e) {
+                     console.warn('Failed to create Point feature (centroid) for ID:', item.osmId, e);
+                }
             });
-            features.push(pointFeature);
-        } catch (e) {
-             console.warn('Failed to create Point feature (centroid) for ID:', item.osmId, e);
+
+            const featureCollection = {
+                type: 'FeatureCollection',
+                metadata: {
+                    name: `Property Data Export - ${new Date().toISOString().slice(0, 10)}`,
+                    generated_by: 'Property Data Validation and Benchmarking App',
+                    feature_count: features.length
+                },
+                features: features
+            };
+
+            const jsonString = JSON.stringify(featureCollection, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/geojson;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            if (link.download !== undefined) { 
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `property_data_geojson_export_${new Date().toISOString().slice(0, 10)}.geojson`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showStatus('GeoJSON data exported successfully!', 'success', 3000);
+            }
         }
-    });
-
-    const featureCollection = {
-        type: 'FeatureCollection',
-        metadata: {
-            name: `Property Data Export - ${new Date().toISOString().slice(0, 10)}`,
-            generated_by: 'Property Data Validation and Benchmarking App',
-            feature_count: features.length
-        },
-        features: features
-    };
-
-    const jsonString = JSON.stringify(featureCollection, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/geojson;charset=utf-8;' });
-    const link = document.createElement("a");
-    
-    if (link.download !== undefined) { 
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `property_data_geojson_export_${new Date().toISOString().slice(0, 10)}.geojson`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showStatus('GeoJSON data exported successfully!', 'success', 3000);
-    }
-}
 
 
         // --- Core Search Execution Logic ---
+        // Track the last geocoded address to detect changes
+        let lastGeocodedAddress = '';
 
         document.getElementById('execute-search').addEventListener('click', () => {
-            if (addressInput.value.trim() !== '' && searchAreaDefined === 'None') {
-                geocodeAddress(addressInput.value);
+            const currentAddress = addressInput.value.trim();
+            const hasAddress = currentAddress !== '';
+            const addressChanged = currentAddress !== lastGeocodedAddress;
+            
+            // Hide the action prompt when user takes action
+            hideActionPrompt();
+            
+            if (hasAddress && (searchAreaDefined === 'None' || (searchAreaDefined === 'Chips' && addressChanged))) {
+                geocodeAddress(currentAddress);
             } 
-            else if (searchAreaDefined !== 'None') {
+            else if (searchAreaDefined !== 'None' && !addressChanged) {
                 executeDataExtraction();
             } 
+            else if (!hasAddress && searchAreaDefined !== 'None') {
+                executeDataExtraction();
+            }
             else {
                 showStatus('Please enter an address or define a map boundary.', 'error');
             }
@@ -1787,6 +2131,7 @@ function exportGeoJson() {
                 } else {
                     showStatus('Please enter an address or define a map boundary.', 'error');
                 }
+                handleGeocodeSuccess();
             }
         });
 
